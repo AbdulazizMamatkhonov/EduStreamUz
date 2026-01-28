@@ -1,9 +1,8 @@
-
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -14,11 +13,14 @@
       "*": ["node_modules/*"]
     }
   },
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node",
-    "transpileOnly": true
-  },
-  "include": ["backend/**/*", "types.ts", "constants.ts", "translations.ts"],
+  "include": [
+    "backend/**/*",
+    "types.ts",
+    "constants.ts",
+    "translations.ts",
+    "index.tsx",
+    "App.tsx",
+    "api.ts"
+  ],
   "exclude": ["node_modules"]
 }
