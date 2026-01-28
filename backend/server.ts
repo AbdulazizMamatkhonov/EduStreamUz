@@ -9,20 +9,32 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = 'your_super_secret_key_123';
 
+// Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
 
+// Basic Security Headers to prevent browser CSP warnings during dev
+app.use((req, res, next) => {
+  res.setHeader("Content-Security-Policy", "default-src * 'unsafe-inline' 'unsafe-eval'; img-src * data:; font-src *;");
+  next();
+});
+
 const connectDB = async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017/edustream');
+    // Note: If you don't have MongoDB installed, the app will fallback to mock data on the frontend
+    await mongoose.connect('mongodb://127.0.0.1:27017/edustream');
     console.log('✅ Connected to local MongoDB');
   } catch (err) {
-    console.error('❌ MongoDB connection error. Ensure MongoDB is running locally at :27017');
-    console.error('Error details:', (err as Error).message);
+    console.warn('⚠️ Local MongoDB not found. Backend will run, but database operations will fail.');
   }
 };
 
 connectDB();
+
+// Health check / dev-tools support
+app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
+  res.status(404).end();
+});
 
 // Auth Routes
 app.post('/api/auth/login', async (req, res) => {
