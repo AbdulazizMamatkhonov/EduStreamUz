@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, SubscriptionPlan, AppLanguage, Course } from './types';
 import { PLANS, MOCK_COURSES } from './constants';
 import { translations } from './translations';
 import Navbar from './components/Navbar';
 import CourseCard from './components/CourseCard';
-import AIAssistant from './components/AIAssistant';
 import Classroom from './components/Classroom';
 import TeacherDashboard from './components/TeacherDashboard';
 import LoginPage from './components/LoginPage';
@@ -318,8 +316,6 @@ const App: React.FC = () => {
           onClose={() => setShowLogin(false)} 
         />
       )}
-
-      {view !== 'classroom' && <AIAssistant />}
       
       <footer className="bg-slate-50 border-t border-slate-200 py-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-sm font-bold">

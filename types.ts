@@ -1,4 +1,3 @@
-
 export enum UserRole {
   STUDENT = 'student',
   TEACHER = 'teacher'
@@ -37,13 +36,6 @@ export interface Course {
   studentsCount: number;
   nextSession?: string;
   zoomLink?: string;
-}
-
-export interface Message {
-  id: string;
-  sender: 'user' | 'ai';
-  content: string;
-  timestamp: Date;
 }
 
 export interface Homework {

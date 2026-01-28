@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Course, AppLanguage } from '../types';
 import { translations } from '../translations';
-import AIAssistant from './AIAssistant';
 
 interface ClassroomProps {
   course: Course;
@@ -245,8 +244,8 @@ const Classroom: React.FC<ClassroomProps> = ({ course, onExit, appLanguage }) =>
           </div>
         </div>
 
-        {/* Dynamic Sidebar - Docked AI & Social */}
-        <div className="w-[380px] flex flex-col gap-4">
+        {/* Dynamic Sidebar - Docked Social & Resources */}
+        <div className="w-[380px] flex flex-col">
           <div className="flex-1 bg-slate-900 rounded-[2.5rem] border border-white/5 flex flex-col overflow-hidden shadow-2xl relative">
             {/* Sidebar Tabs */}
             <div className="flex p-2 bg-black/20">
@@ -329,11 +328,6 @@ const Classroom: React.FC<ClassroomProps> = ({ course, onExit, appLanguage }) =>
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Docked AI Assistant */}
-          <div className="h-64">
-             <AIAssistant />
           </div>
         </div>
       </div>
