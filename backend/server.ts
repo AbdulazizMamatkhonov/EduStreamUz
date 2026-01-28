@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User, Course, Quiz, Homework } from './models.ts';
+import { User, Course, Quiz, Homework } from './models.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;

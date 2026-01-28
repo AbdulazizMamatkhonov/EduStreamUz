@@ -23,6 +23,6 @@
   },
   "scripts": {
     "start": "node --loader ts-node/esm backend/server.ts",
-    "dev": "ts-node-dev --respawn --transpile-only backend/server.ts"
+    "dev": "ts-node-dev --respawn --esm --transpile-only backend/server.ts"
   }
 }
