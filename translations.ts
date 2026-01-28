@@ -1,4 +1,6 @@
 
+import type { AppLanguage } from './types';
+
 export const translations = {
   en: {
     nav_home: "Home",
@@ -186,4 +188,4 @@ export const translations = {
     weekly_activity: "Haftalik faollik",
     back_to_dashboard: "Panelga qaytish"
   }
-};
+} satisfies Record<AppLanguage, Record<string, string>>;

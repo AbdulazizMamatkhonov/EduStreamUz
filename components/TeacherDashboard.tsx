@@ -14,7 +14,7 @@ interface TeacherDashboardProps {
 
 const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, onStartSession, onCreateCourse, courses }) => {
   const t = translations[appLanguage];
-  const teacherCourses = courses.filter(c => c.teacherId === user.id);
+  const teacherCourses = courses.filter((c: Course) => c.teacherId === user.id);
   
   const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'results'>('overview');
   const [showCreateCourse, setShowCreateCourse] = useState(false);
@@ -94,7 +94,17 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, 
     }
   };
 
-  const [newCourse, setNewCourse] = useState({ title: '', category: 'Development', price: 0, description: '' });
+  const [newCourse, setNewCourse] = useState({
+    title: '',
+    category: 'Development',
+    price: '',
+    description: '',
+    language: appLanguage,
+    thumbnail: '',
+    isGroup: true,
+    nextSession: '',
+    zoomLink: ''
+  });
   const [newHomework, setNewHomework] = useState<Partial<Homework>>({ type: 'text', title: '', description: '', courseId: teacherCourses[0]?.id || '' });
 
   const handleSaveCourse = async (e: React.FormEvent) => {
@@ -104,19 +114,30 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, 
       description: newCourse.description,
       teacherId: user.id,
       teacherName: user.name,
-      thumbnail: `https://picsum.photos/seed/${newCourse.title}/800/450`,
+      thumbnail: newCourse.thumbnail || `https://picsum.photos/seed/${newCourse.title}/800/450`,
       category: newCourse.category,
-      language: appLanguage,
-      isGroup: true,
-      price: newCourse.price,
+      language: newCourse.language,
+      isGroup: newCourse.isGroup,
+      price: Number(newCourse.price) || 0,
       rating: 0,
       studentsCount: 0,
-      nextSession: new Date().toISOString()
+      nextSession: newCourse.nextSession ? new Date(newCourse.nextSession).toISOString() : new Date().toISOString(),
+      zoomLink: newCourse.zoomLink
     };
     try {
       await onCreateCourse(course as Course);
       setShowCreateCourse(false);
-      setNewCourse({ title: '', category: 'Development', price: 0, description: '' });
+      setNewCourse({
+        title: '',
+        category: 'Development',
+        price: '',
+        description: '',
+        language: appLanguage,
+        thumbnail: '',
+        isGroup: true,
+        nextSession: '',
+        zoomLink: ''
+      });
     } catch (err) {
       alert("Error saving course");
     }
@@ -133,7 +154,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, 
     };
     try {
       const saved = await api.createHomework(hw);
-      setHomeworks(prev => [...prev, saved]);
+      setHomeworks((prev: Homework[]) => [...prev, saved]);
       setShowCreateHomework(false);
     } catch (err) {
       alert("Error saving homework");
@@ -169,7 +190,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, 
                <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm">
                   <h3 className="text-xl font-bold text-slate-900 mb-6">Your Live Courses</h3>
                   <div className="space-y-4">
-                    {teacherCourses.map(course => (
+                    {teacherCourses.map((course: Course) => (
                       <div key={course.id} className="flex items-center gap-6 p-4 rounded-2xl bg-slate-50 border border-slate-100">
                         <img src={course.thumbnail} className="w-24 h-16 rounded-lg object-cover" alt="" />
                         <div className="flex-1">
@@ -197,8 +218,28 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, 
               <div className="p-8">
                 <div className="flex justify-between items-center mb-8"><h3 className="text-2xl font-black text-slate-900">New Course</h3><button onClick={() => setShowCreateCourse(false)}><i className="fas fa-times text-xl"></i></button></div>
                 <form onSubmit={handleSaveCourse} className="space-y-6">
-                  <input required value={newCourse.title} onChange={e => setNewCourse({...newCourse, title: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Title" />
-                  <textarea required value={newCourse.description} onChange={e => setNewCourse({...newCourse, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Description" rows={3} />
+                  <input required value={newCourse.title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCourse({...newCourse, title: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Course name" />
+                  <textarea required value={newCourse.description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewCourse({...newCourse, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Course description" rows={3} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input value={newCourse.category} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCourse({...newCourse, category: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Category" />
+                    <select value={newCourse.language} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewCourse({...newCourse, language: e.target.value as AppLanguage})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm">
+                      <option value="en">English</option>
+                      <option value="ru">Русский</option>
+                      <option value="uz">O'zbekcha</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input type="number" min="0" value={newCourse.price} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCourse({...newCourse, price: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Price (USD)" />
+                    <select value={newCourse.isGroup ? 'group' : 'one'} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewCourse({...newCourse, isGroup: e.target.value === 'group'})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm">
+                      <option value="group">Group class</option>
+                      <option value="one">1-on-1</option>
+                    </select>
+                  </div>
+                  <input value={newCourse.thumbnail} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCourse({...newCourse, thumbnail: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Thumbnail URL (optional)" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input type="datetime-local" value={newCourse.nextSession} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCourse({...newCourse, nextSession: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" />
+                    <input value={newCourse.zoomLink} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCourse({...newCourse, zoomLink: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Live session link" />
+                  </div>
                   <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl">Launch Course</button>
                 </form>
               </div>
