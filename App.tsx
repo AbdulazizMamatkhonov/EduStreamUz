@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, SubscriptionPlan, AppLanguage, Course } from './types';
 import { PLANS, MOCK_COURSES } from './constants';
@@ -8,7 +9,7 @@ import Classroom from './components/Classroom';
 import TeacherDashboard from './components/TeacherDashboard';
 import LoginPage from './components/LoginPage';
 import CourseDetails from './components/CourseDetails';
-import { api } from './api';
+import { api } from './apiService';
 
 type ViewType = 'landing' | 'courses' | 'pricing' | 'dashboard' | 'course-details' | 'classroom';
 
@@ -49,7 +50,6 @@ const App: React.FC = () => {
       setUser(data.user);
       localStorage.setItem('token', data.token);
     } catch (err) {
-      // Graceful fallback login for demo purposes
       const isTeacher = role === UserRole.TEACHER;
       setUser({
         id: isTeacher ? 't1' : 's1',
@@ -116,52 +116,10 @@ const App: React.FC = () => {
     );
   }
 
-  const renderHero = () => (
-    <section className="relative py-20 overflow-hidden bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-center">
-          <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
-            <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 mb-6 ring-1 ring-indigo-200">
-              <span className="w-2 h-2 bg-indigo-600 rounded-full mr-2 animate-ping"></span>
-              {t.hero_badge}
-            </span>
-            <h1 className="text-4xl tracking-tight font-extrabold text-slate-900 sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl leading-tight">
-              {t.hero_title.split('Live')[0]}<span className="text-indigo-600 italic">Live</span>{t.hero_title.split('Live')[1]}
-            </h1>
-            <p className="mt-6 text-lg text-slate-500 leading-relaxed">
-              {t.hero_subtitle}
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 sm:justify-center lg:justify-start">
-              <button onClick={() => setView('courses')} className="inline-flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-bold rounded-2xl text-white bg-indigo-600 hover:bg-indigo-700 md:text-lg transition-all shadow-xl shadow-indigo-100 active:scale-95">
-                {t.btn_explore}
-              </button>
-              <button onClick={() => setView('pricing')} className="inline-flex items-center justify-center px-8 py-3.5 border border-slate-200 text-base font-bold rounded-2xl text-slate-700 bg-white hover:bg-slate-50 md:text-lg transition-all border shadow-sm active:scale-95">
-                {t.btn_view_plans}
-              </button>
-            </div>
-          </div>
-          <div className="mt-12 lg:mt-0 lg:col-span-6 relative">
-            <div className="bg-white rounded-[2rem] shadow-2xl p-5 transform lg:rotate-2 hover:rotate-0 transition-all duration-700 ease-out border border-slate-100">
-              <div className="relative rounded-2xl overflow-hidden aspect-video shadow-inner">
-                <img src="https://picsum.photos/seed/learning-modern/1200/800" alt="Live session preview" className="object-cover w-full h-full" />
-                <div className="absolute inset-0 bg-slate-900/30 flex items-center justify-center backdrop-blur-[2px]">
-                  <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center text-white text-3xl animate-pulse cursor-pointer hover:scale-110 transition-transform ring-4 ring-white/30">
-                    <i className="fas fa-play ml-1"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-
   const mainView = () => {
     if (view === 'classroom' && activeClassroom) {
       return <Classroom course={activeClassroom} onExit={() => setView('dashboard')} appLanguage={language} />;
     }
-
     if (view === 'course-details' && selectedCourse) {
       return (
         <CourseDetails 
@@ -174,7 +132,6 @@ const App: React.FC = () => {
         />
       );
     }
-
     if (view === 'dashboard' && user) {
         if (user.role === UserRole.TEACHER) {
             return <TeacherDashboard user={user} appLanguage={language} onStartSession={joinClassroom} onCreateCourse={handleCreateCourse} courses={courses} />;
@@ -230,7 +187,6 @@ const App: React.FC = () => {
             </section>
         );
     }
-
     if (view === 'courses') {
         return (
             <section id="courses" className="py-24 bg-white">
@@ -268,24 +224,62 @@ const App: React.FC = () => {
             </section>
         );
     }
-
     return (
       <>
-        {user ? null : renderHero()}
-        <section id="courses" className="py-24 bg-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">{t.featured_courses}</h2>
-                        <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                        {courses.map(course => (
-                            <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
-                                <CourseCard course={course} onEnroll={(id) => enrollInCourse({ stopPropagation: () => {} } as any, id)} isEnrolled={enrolledCourses.includes(course.id)} appLanguage={language} />
-                            </div>
-                        ))}
-                    </div>
+        {user ? null : (
+          <section className="relative py-20 overflow-hidden bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-center">
+                <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
+                  <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 mb-6 ring-1 ring-indigo-200">
+                    <span className="w-2 h-2 bg-indigo-600 rounded-full mr-2 animate-ping"></span>
+                    {t.hero_badge}
+                  </span>
+                  <h1 className="text-4xl tracking-tight font-extrabold text-slate-900 sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl leading-tight">
+                    {t.hero_title.split('Live')[0]}<span className="text-indigo-600 italic">Live</span>{t.hero_title.split('Live')[1]}
+                  </h1>
+                  <p className="mt-6 text-lg text-slate-500 leading-relaxed">
+                    {t.hero_subtitle}
+                  </p>
+                  <div className="mt-10 flex flex-col sm:flex-row gap-4 sm:justify-center lg:justify-start">
+                    <button onClick={() => setView('courses')} className="inline-flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-bold rounded-2xl text-white bg-indigo-600 hover:bg-indigo-700 md:text-lg transition-all shadow-xl shadow-indigo-100 active:scale-95">
+                      {t.btn_explore}
+                    </button>
+                    <button onClick={() => setView('pricing')} className="inline-flex items-center justify-center px-8 py-3.5 border border-slate-200 text-base font-bold rounded-2xl text-slate-700 bg-white hover:bg-slate-50 md:text-lg transition-all border shadow-sm active:scale-95">
+                      {t.btn_view_plans}
+                    </button>
+                  </div>
                 </div>
+                <div className="mt-12 lg:mt-0 lg:col-span-6 relative">
+                  <div className="bg-white rounded-[2rem] shadow-2xl p-5 transform lg:rotate-2 hover:rotate-0 transition-all duration-700 ease-out border border-slate-100">
+                    <div className="relative rounded-2xl overflow-hidden aspect-video shadow-inner">
+                      <img src="https://picsum.photos/seed/learning-modern/1200/800" alt="Live session preview" className="object-cover w-full h-full" />
+                      <div className="absolute inset-0 bg-slate-900/30 flex items-center justify-center backdrop-blur-[2px]">
+                        <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center text-white text-3xl animate-pulse cursor-pointer hover:scale-110 transition-transform ring-4 ring-white/30">
+                          <i className="fas fa-play ml-1"></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+        <section id="courses" className="py-24 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+                <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">{t.featured_courses}</h2>
+                <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {courses.map(course => (
+                    <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
+                        <CourseCard course={course} onEnroll={(id) => enrollInCourse({ stopPropagation: () => {} } as any, id)} isEnrolled={enrolledCourses.includes(course.id)} appLanguage={language} />
+                    </div>
+                ))}
+            </div>
+          </div>
         </section>
       </>
     );
@@ -297,7 +291,7 @@ const App: React.FC = () => {
         <Navbar 
           user={user} 
           onLogout={handleLogout} 
-          onLogin={(role) => setShowLogin(true)} 
+          onLogin={() => setShowLogin(true)} 
           language={language}
           onLanguageChange={setLanguage}
           onNavigate={(v) => setView(v as ViewType)}
@@ -305,11 +299,9 @@ const App: React.FC = () => {
           isBackendConnected={isBackendConnected}
         />
       )}
-      
       <main className="flex-1">
         {mainView()}
       </main>
-
       {showLogin && (
         <LoginPage 
           onLogin={handleLogin} 
@@ -317,7 +309,6 @@ const App: React.FC = () => {
           onClose={() => setShowLogin(false)} 
         />
       )}
-      
       <footer className="bg-slate-50 border-t border-slate-200 py-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-[10px] font-black tracking-[0.2em] uppercase">
           <span>© 2023 EDUSTREAM ACADEMY. BUILT FOR GLOBAL LEARNERS.</span>
