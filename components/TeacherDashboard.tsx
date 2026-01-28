@@ -240,6 +240,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, 
                     <input type="datetime-local" value={newCourse.nextSession} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCourse({...newCourse, nextSession: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" />
                     <input value={newCourse.zoomLink} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCourse({...newCourse, zoomLink: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Live session link" />
                   </div>
+                  <input required value={newCourse.title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCourse({...newCourse, title: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Title" />
+                  <textarea required value={newCourse.description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewCourse({...newCourse, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Description" rows={3} />
                   <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl">Launch Course</button>
                 </form>
               </div>
