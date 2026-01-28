@@ -7,8 +7,8 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
-      // Proxy only actual API data calls
-      '/api': {
+      // Using /api/ ensures we only proxy data requests, not files like apiService.ts
+      '/api/': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
