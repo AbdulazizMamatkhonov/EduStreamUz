@@ -1,3 +1,4 @@
+
 {
   "compilerOptions": {
     "target": "ESNext",
@@ -12,6 +13,11 @@
     "paths": {
       "*": ["node_modules/*"]
     }
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node",
+    "transpileOnly": true
   },
   "include": ["backend/**/*", "types.ts", "constants.ts", "translations.ts"],
   "exclude": ["node_modules"]
