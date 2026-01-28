@@ -15,7 +15,7 @@ app.use(express.json());
 
 // Basic Security Headers to prevent browser CSP warnings during dev
 app.use((req, res, next) => {
-  res.setHeader("Content-Security-Policy", "default-src * 'unsafe-inline' 'unsafe-eval'; img-src * data:; font-src *;");
+  res.setHeader("Content-Security-Policy", "default-src * 'unsafe-inline' 'unsafe-eval'; img-src * data:; font-src *; connect-src *;");
   next();
 });
 
@@ -33,12 +33,16 @@ connectDB();
 
 // Root route to confirm backend is running
 app.get('/', (req, res) => {
-  res.json({ message: 'EduStream API is running', status: 'online' });
+  res.json({ 
+    message: 'EduStream API is running', 
+    status: 'online',
+    endpoints: ['/api/courses', '/api/auth/login']
+  });
 });
 
 // Health check / dev-tools support
 app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
-  res.status(404).end();
+  res.status(200).json({ status: "ok" });
 });
 
 // Auth Routes
