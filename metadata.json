@@ -1,6 +1,6 @@
 {
   "name": "EduStream Academy",
-  "description": "A modern streaming-based online school platform featuring live Zoom integration, course management for students and teachers, and an AI-powered study assistant.",
+  "description": "A modern streaming-based online school platform featuring live Zoom integration and comprehensive course management for students and teachers.",
   "requestFramePermissions": [
     "camera",
     "microphone"
