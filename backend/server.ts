@@ -4,7 +4,6 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-// Standard import without extension for local module resolution
 import { User, Course, Quiz, Homework } from './models';
 
 const app = express();
@@ -16,7 +15,7 @@ app.use(cors() as any);
 // Fix: Resolve line 14 error: 'Argument of type 'NextHandleFunction' is not assignable to parameter of type 'PathParams'.'
 app.use(express.json() as any);
 
-app.get('/', (req, res) => {
+app.get('/', (_req: any, res: any) => {
   res.json({ status: 'EduStream Backend Online' });
 });
 
@@ -31,7 +30,7 @@ const connectDB = async () => {
 
 connectDB();
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', async (req: any, res: any) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -45,7 +44,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.get('/api/courses', async (req, res) => {
+app.get('/api/courses', async (_req: any, res: any) => {
   try {
     const courses = await Course.find();
     res.json(courses);
@@ -54,7 +53,7 @@ app.get('/api/courses', async (req, res) => {
   }
 });
 
-app.post('/api/courses', async (req, res) => {
+app.post('/api/courses', async (req: any, res: any) => {
   try {
     const course = new Course(req.body);
     await course.save();
