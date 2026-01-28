@@ -31,6 +31,11 @@ const connectDB = async () => {
 
 connectDB();
 
+// Root route to confirm backend is running
+app.get('/', (req, res) => {
+  res.json({ message: 'EduStream API is running', status: 'online' });
+});
+
 // Health check / dev-tools support
 app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
   res.status(404).end();
