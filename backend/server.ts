@@ -4,8 +4,8 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-// Use explicit .ts extension for ts-node-dev ESM resolution
-import { User, Course, Quiz, Homework } from './models.ts';
+// Use explicit .js extension for ESM resolution with ts-node-dev
+import { User, Course, Quiz, Homework } from './models.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
