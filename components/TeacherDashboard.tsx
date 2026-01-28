@@ -14,7 +14,7 @@ interface TeacherDashboardProps {
 
 const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, onStartSession, onCreateCourse, courses }) => {
   const t = translations[appLanguage];
-  const teacherCourses = courses.filter(c => c.teacherId === user.id);
+  const teacherCourses = courses.filter((c: Course) => c.teacherId === user.id);
   
   const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'results'>('overview');
   const [showCreateCourse, setShowCreateCourse] = useState(false);
@@ -133,7 +133,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, 
     };
     try {
       const saved = await api.createHomework(hw);
-      setHomeworks(prev => [...prev, saved]);
+      setHomeworks((prev: Homework[]) => [...prev, saved]);
       setShowCreateHomework(false);
     } catch (err) {
       alert("Error saving homework");
@@ -169,7 +169,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, 
                <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm">
                   <h3 className="text-xl font-bold text-slate-900 mb-6">Your Live Courses</h3>
                   <div className="space-y-4">
-                    {teacherCourses.map(course => (
+                    {teacherCourses.map((course: Course) => (
                       <div key={course.id} className="flex items-center gap-6 p-4 rounded-2xl bg-slate-50 border border-slate-100">
                         <img src={course.thumbnail} className="w-24 h-16 rounded-lg object-cover" alt="" />
                         <div className="flex-1">
@@ -197,8 +197,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user, appLanguage, 
               <div className="p-8">
                 <div className="flex justify-between items-center mb-8"><h3 className="text-2xl font-black text-slate-900">New Course</h3><button onClick={() => setShowCreateCourse(false)}><i className="fas fa-times text-xl"></i></button></div>
                 <form onSubmit={handleSaveCourse} className="space-y-6">
-                  <input required value={newCourse.title} onChange={e => setNewCourse({...newCourse, title: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Title" />
-                  <textarea required value={newCourse.description} onChange={e => setNewCourse({...newCourse, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Description" rows={3} />
+                  <input required value={newCourse.title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCourse({...newCourse, title: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Title" />
+                  <textarea required value={newCourse.description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewCourse({...newCourse, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Description" rows={3} />
                   <button type="submit" className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl">Launch Course</button>
                 </form>
               </div>
