@@ -43,21 +43,40 @@ const App: React.FC = () => {
     initApp();
   }, []);
 
-  const handleLogin = async (role: UserRole) => {
+  const handleLogin = async (payload: { email: string; password: string; role: UserRole }) => {
     try {
-      const email = role === UserRole.TEACHER ? 'teacher@edustream.com' : 'student@edustream.com';
-      const data = await api.login({ email, password: 'password123' });
+      const data = await api.login({ email: payload.email, password: payload.password });
       setUser(data.user);
       localStorage.setItem('token', data.token);
     } catch (err) {
-      const isTeacher = role === UserRole.TEACHER;
+      const isTeacher = payload.role === UserRole.TEACHER;
       setUser({
         id: isTeacher ? 't1' : 's1',
         name: isTeacher ? 'Sarah Jenkins' : 'Alex Student',
-        email: isTeacher ? 'sarah@edustream.com' : 'student@edustream.com',
-        role: role,
+        email: payload.email || (isTeacher ? 'sarah@edustream.com' : 'student@edustream.com'),
+        role: payload.role,
         avatar: `https://i.pravatar.cc/150?u=${isTeacher ? 'teacher' : 'student'}`,
         subscription: isTeacher ? undefined : SubscriptionPlan.PRO
+      });
+    }
+    setShowLogin(false);
+    setView('dashboard');
+  };
+
+  const handleRegister = async (payload: { name: string; email: string; password: string; role: UserRole }) => {
+    try {
+      const data = await api.register(payload);
+      setUser(data.user);
+      localStorage.setItem('token', data.token);
+    } catch (err) {
+      const isTeacher = payload.role === UserRole.TEACHER;
+      setUser({
+        id: isTeacher ? 't1' : 's1',
+        name: payload.name || (isTeacher ? 'Sarah Jenkins' : 'Alex Student'),
+        email: payload.email,
+        role: payload.role,
+        avatar: `https://i.pravatar.cc/150?u=${payload.email || (isTeacher ? 'teacher' : 'student')}`,
+        subscription: isTeacher ? undefined : SubscriptionPlan.FREE
       });
     }
     setShowLogin(false);
@@ -304,7 +323,8 @@ const App: React.FC = () => {
       </main>
       {showLogin && (
         <LoginPage 
-          onLogin={handleLogin} 
+          onLogin={handleLogin}
+          onRegister={handleRegister}
           appLanguage={language} 
           onClose={() => setShowLogin(false)} 
         />
