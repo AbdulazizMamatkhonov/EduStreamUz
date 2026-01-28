@@ -23,6 +23,8 @@
   "include": [
     "backend/**/*",
     "types.ts",
+    "types/backend-shim.d.ts",
+    "types/react-shim.d.ts",
     "constants.ts",
     "translations.ts",
     "index.tsx",
