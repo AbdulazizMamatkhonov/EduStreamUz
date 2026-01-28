@@ -11,9 +11,10 @@ interface NavbarProps {
   onLanguageChange: (lang: AppLanguage) => void;
   onNavigate: (view: string) => void;
   currentView: string;
+  isBackendConnected?: boolean | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onLogin, language, onLanguageChange, onNavigate, currentView }) => {
+const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onLogin, language, onLanguageChange, onNavigate, currentView, isBackendConnected }) => {
   const t = translations[language];
   const [showLangMenu, setShowLangMenu] = useState(false);
 
@@ -64,6 +65,14 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onLogin, language, onLa
           </div>
           
           <div className="flex items-center gap-2 md:gap-4">
+            {/* Status indicator */}
+            <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-lg border border-slate-200">
+               <div className={`w-1.5 h-1.5 rounded-full ${isBackendConnected === true ? 'bg-green-500' : (isBackendConnected === false ? 'bg-amber-400' : 'bg-slate-300 animate-pulse')}`}></div>
+               <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                 {isBackendConnected === true ? 'Synced' : (isBackendConnected === false ? 'Local' : 'Connecting')}
+               </span>
+            </div>
+
             <div className="relative">
               <button 
                 onClick={() => setShowLangMenu(!showLangMenu)}

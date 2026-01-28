@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, SubscriptionPlan, AppLanguage, Course } from './types';
-import { MOCK_COURSES, PLANS } from './constants';
+import { PLANS, MOCK_COURSES } from './constants';
 import { translations } from './translations';
 import Navbar from './components/Navbar';
 import CourseCard from './components/CourseCard';
@@ -10,6 +10,7 @@ import Classroom from './components/Classroom';
 import TeacherDashboard from './components/TeacherDashboard';
 import LoginPage from './components/LoginPage';
 import CourseDetails from './components/CourseDetails';
+import { api } from './api';
 
 type ViewType = 'landing' | 'courses' | 'pricing' | 'dashboard' | 'course-details' | 'classroom';
 
@@ -22,19 +23,42 @@ const App: React.FC = () => {
   const [activeClassroom, setActiveClassroom] = useState<Course | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(null);
 
-  const t = translations[language];
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const data = await api.getCourses();
+        if (data && Array.isArray(data) && data.length > 0) {
+          setCourses(data);
+        }
+        setIsBackendConnected(true);
+      } catch (err) {
+        console.warn("Backend not reachable. Running in Local Demo Mode.");
+        setIsBackendConnected(false);
+      }
+    };
+    loadCourses();
+  }, []);
 
-  const handleLogin = (role: UserRole) => {
-    const isTeacher = role === UserRole.TEACHER;
-    setUser({
-      id: isTeacher ? 't1' : 's1',
-      name: isTeacher ? 'Sarah Jenkins' : 'Alex Student',
-      email: isTeacher ? 'sarah@edustream.com' : 'student@edustream.com',
-      role: role,
-      avatar: `https://i.pravatar.cc/150?u=${isTeacher ? 'teacher' : 'student'}`,
-      subscription: isTeacher ? undefined : SubscriptionPlan.PRO
-    });
+  const handleLogin = async (role: UserRole) => {
+    try {
+      const email = role === UserRole.TEACHER ? 'teacher@edustream.com' : 'student@edustream.com';
+      const data = await api.login({ email, password: 'password123' });
+      setUser(data.user);
+      localStorage.setItem('token', data.token);
+    } catch (err) {
+      // Graceful fallback login for demo purposes
+      const isTeacher = role === UserRole.TEACHER;
+      setUser({
+        id: isTeacher ? 't1' : 's1',
+        name: isTeacher ? 'Sarah Jenkins' : 'Alex Student',
+        email: isTeacher ? 'sarah@edustream.com' : 'student@edustream.com',
+        role: role,
+        avatar: `https://i.pravatar.cc/150?u=${isTeacher ? 'teacher' : 'student'}`,
+        subscription: isTeacher ? undefined : SubscriptionPlan.PRO
+      });
+    }
     setShowLogin(false);
     setView('dashboard');
   };
@@ -44,15 +68,24 @@ const App: React.FC = () => {
     setEnrolledCourses([]);
     setActiveClassroom(null);
     setSelectedCourse(null);
+    localStorage.removeItem('token');
     setView('landing');
   };
 
-  const handleCreateCourse = (newCourse: Course) => {
-    setCourses(prev => [newCourse, ...prev]);
+  const handleCreateCourse = async (newCourse: Course) => {
+    try {
+      const saved = await api.createCourse(newCourse);
+      setCourses(prev => [saved, ...prev]);
+    } catch (err) {
+      // Local fallback if backend is down
+      setCourses(prev => [{...newCourse, id: Date.now().toString()}, ...prev]);
+    }
   };
 
+  const t = translations[language];
+
   const enrollInCourse = (e: React.MouseEvent, courseId: string) => {
-    e.stopPropagation(); 
+    if (e && e.stopPropagation) e.stopPropagation(); 
     if (!user) {
       setShowLogin(true);
       return;
@@ -259,11 +292,18 @@ const App: React.FC = () => {
         <Navbar 
           user={user} 
           onLogout={handleLogout} 
-          onLogin={() => setShowLogin(true)} 
+          onLogin={(role) => {
+            if (view === 'landing' || view === 'courses' || view === 'pricing') {
+              setShowLogin(true);
+            } else {
+              handleLogin(role);
+            }
+          }} 
           language={language}
           onLanguageChange={setLanguage}
           onNavigate={(v) => setView(v as ViewType)}
           currentView={view}
+          isBackendConnected={isBackendConnected}
         />
       )}
       
@@ -282,8 +322,12 @@ const App: React.FC = () => {
       {view !== 'classroom' && <AIAssistant />}
       
       <footer className="bg-slate-50 border-t border-slate-200 py-12">
-        <div className="max-w-7xl mx-auto px-4 text-center text-slate-400 text-sm font-bold">
-          © 2023 EDUSTREAM ACADEMY. BUILT FOR GLOBAL LEARNERS.
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-sm font-bold">
+          <span>© 2023 EDUSTREAM ACADEMY. BUILT FOR GLOBAL LEARNERS.</span>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
+            <span>Local DB Connectivity: {isBackendConnected === true ? 'Active' : (isBackendConnected === false ? 'Offline (Demo Mode)' : 'Checking...')}</span>
+          </div>
         </div>
       </footer>
     </div>
