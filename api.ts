@@ -1,5 +1,5 @@
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = '/api';
 
 export const api = {
   // Auth
@@ -16,6 +16,7 @@ export const api = {
   // Courses
   getCourses: async () => {
     const res = await fetch(`${API_URL}/courses`);
+    if (!res.ok) throw new Error('Failed to fetch courses');
     return res.json();
   },
 
@@ -25,12 +26,14 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(courseData)
     });
+    if (!res.ok) throw new Error('Failed to create course');
     return res.json();
   },
 
   // Quizzes
   getQuizzes: async (courseId: string) => {
     const res = await fetch(`${API_URL}/quizzes/${courseId}`);
+    if (!res.ok) throw new Error('Failed to fetch quizzes');
     return res.json();
   },
 
@@ -40,12 +43,14 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(quizData)
     });
+    if (!res.ok) throw new Error('Failed to create quiz');
     return res.json();
   },
 
   // Homework
   getHomework: async (courseId: string) => {
     const res = await fetch(`${API_URL}/homework/${courseId}`);
+    if (!res.ok) throw new Error('Failed to fetch homework');
     return res.json();
   },
 
@@ -55,6 +60,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(hwData)
     });
+    if (!res.ok) throw new Error('Failed to create homework');
     return res.json();
   }
 };

@@ -22,9 +22,10 @@ const App: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadCourses = async () => {
+    const initApp = async () => {
       try {
         const data = await api.getCourses();
         if (data && Array.isArray(data) && data.length > 0) {
@@ -32,11 +33,13 @@ const App: React.FC = () => {
         }
         setIsBackendConnected(true);
       } catch (err) {
-        console.warn("Backend not reachable. Running in Local Demo Mode.");
+        console.warn("Backend not reachable or empty. Using mock data.");
         setIsBackendConnected(false);
+      } finally {
+        setIsLoading(false);
       }
     };
-    loadCourses();
+    initApp();
   }, []);
 
   const handleLogin = async (role: UserRole) => {
@@ -75,7 +78,6 @@ const App: React.FC = () => {
       const saved = await api.createCourse(newCourse);
       setCourses(prev => [saved, ...prev]);
     } catch (err) {
-      // Local fallback if backend is down
       setCourses(prev => [{...newCourse, id: Date.now().toString()}, ...prev]);
     }
   };
@@ -91,7 +93,6 @@ const App: React.FC = () => {
     if (!enrolledCourses.includes(courseId)) {
       setEnrolledCourses(prev => [...prev, courseId]);
     }
-    alert(language === 'en' ? "Enrolled successfully!" : (language === 'ru' ? "Успешная запись!" : "Muvaffaqiyatli yozildingiz!"));
   };
 
   const joinClassroom = (course: Course) => {
@@ -104,12 +105,24 @@ const App: React.FC = () => {
     setView('course-details');
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-bold animate-pulse uppercase tracking-widest text-xs">Initializing EduStream...</p>
+        </div>
+      </div>
+    );
+  }
+
   const renderHero = () => (
     <section className="relative py-20 overflow-hidden bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-center">
           <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
             <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 mb-6 ring-1 ring-indigo-200">
+              <span className="w-2 h-2 bg-indigo-600 rounded-full mr-2 animate-ping"></span>
               {t.hero_badge}
             </span>
             <h1 className="text-4xl tracking-tight font-extrabold text-slate-900 sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl leading-tight">
@@ -144,115 +157,6 @@ const App: React.FC = () => {
     </section>
   );
 
-  const renderDashboard = () => {
-    if (!user) return null;
-    if (user.role === UserRole.TEACHER) {
-      return (
-        <TeacherDashboard 
-          user={user} 
-          appLanguage={language} 
-          onStartSession={joinClassroom} 
-          onCreateCourse={handleCreateCourse}
-          courses={courses}
-        />
-      );
-    }
-
-    return (
-      <section className="py-12 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-            <div>
-              <h2 className="text-3xl font-extrabold text-slate-900">
-                {t.welcome_back}, {user.name}!
-              </h2>
-              <p className="text-slate-500 mt-2 font-medium">{t.dashboard_subtitle}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
-              <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl mb-6">
-                <i className="fas fa-book-open"></i>
-              </div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">{t.stat_active_courses}</p>
-              <p className="text-3xl font-black text-slate-900">{enrolledCourses.length}</p>
-            </div>
-          </div>
-
-          <div className="mt-16">
-            <h3 className="text-2xl font-bold text-slate-900 mb-8">{t.course_progress}</h3>
-            {enrolledCourses.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {courses.filter(c => enrolledCourses.includes(c.id)).map((course) => (
-                    <div key={course.id} className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => viewCourse(course)}>
-                      <div className="w-24 h-24 flex-shrink-0 rounded-2xl overflow-hidden shadow-sm">
-                        <img src={course.thumbnail} className="w-full h-full object-cover" alt="" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-slate-900 text-lg mb-4">{course.title}</h4>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); joinClassroom(course); }}
-                          className="text-xs font-bold text-white bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
-                        >
-                          {t.continue_learning}
-                        </button>
-                      </div>
-                    </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-white rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-200 text-slate-400">
-                <button onClick={() => setView('courses')} className="font-bold text-indigo-600 hover:underline">{t.btn_find_course}</button>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-    );
-  };
-
-  const renderCourses = () => (
-    <section id="courses" className="py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">{t.featured_courses}</h2>
-          <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {courses.map(course => (
-            <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
-              <CourseCard 
-                course={course} 
-                onEnroll={(id) => enrollInCourse({ stopPropagation: () => {} } as any, id)}
-                isEnrolled={enrolledCourses.includes(course.id)}
-                appLanguage={language}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-
-  const renderPricing = () => (
-    <section id="pricing" className="py-24 bg-slate-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 text-center">
-        <h2 className="text-4xl font-extrabold mb-12">{t.pricing_title}</h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          {PLANS.map(plan => (
-            <div key={plan.name} className={`bg-slate-800 p-8 rounded-[2.5rem] border ${plan.popular ? 'border-indigo-500 scale-105' : 'border-slate-700'}`}>
-              <h3 className="text-xl font-bold mb-4">{plan.name}</h3>
-              <div className="text-4xl font-black mb-6">{plan.price}</div>
-              <button className="w-full bg-indigo-600 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">{t.btn_get_started}</button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-
   const mainView = () => {
     if (view === 'classroom' && activeClassroom) {
       return <Classroom course={activeClassroom} onExit={() => setView('dashboard')} appLanguage={language} />;
@@ -271,15 +175,118 @@ const App: React.FC = () => {
       );
     }
 
-    if (view === 'dashboard' && user) return renderDashboard();
-    if (view === 'courses') return renderCourses();
-    if (view === 'pricing') return renderPricing();
+    if (view === 'dashboard' && user) {
+        if (user.role === UserRole.TEACHER) {
+            return <TeacherDashboard user={user} appLanguage={language} onStartSession={joinClassroom} onCreateCourse={handleCreateCourse} courses={courses} />;
+        }
+        return (
+            <section className="py-12 bg-slate-50">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="mb-10 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+                  <div>
+                    <h2 className="text-3xl font-extrabold text-slate-900">
+                      {t.welcome_back}, {user.name}!
+                    </h2>
+                    <p className="text-slate-500 mt-2 font-medium">{t.dashboard_subtitle}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
+                    <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl mb-6">
+                      <i className="fas fa-book-open"></i>
+                    </div>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">{t.stat_active_courses}</p>
+                    <p className="text-3xl font-black text-slate-900">{enrolledCourses.length}</p>
+                  </div>
+                </div>
+                <div className="mt-16">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-8">{t.course_progress}</h3>
+                  {enrolledCourses.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {courses.filter(c => enrolledCourses.includes(c.id)).map((course) => (
+                          <div key={course.id} className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => viewCourse(course)}>
+                            <div className="w-24 h-24 flex-shrink-0 rounded-2xl overflow-hidden shadow-sm">
+                              <img src={course.thumbnail} className="w-full h-full object-cover" alt="" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-slate-900 text-lg mb-4">{course.title}</h4>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); joinClassroom(course); }}
+                                className="text-xs font-bold text-white bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
+                              >
+                                {t.continue_learning}
+                              </button>
+                            </div>
+                          </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-200 text-slate-400">
+                      <button onClick={() => setView('courses')} className="font-bold text-indigo-600 hover:underline">{t.btn_find_course}</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+        );
+    }
+
+    if (view === 'courses') {
+        return (
+            <section id="courses" className="py-24 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">{t.featured_courses}</h2>
+                        <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                        {courses.map(course => (
+                            <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
+                                <CourseCard course={course} onEnroll={(id) => enrollInCourse({ stopPropagation: () => {} } as any, id)} isEnrolled={enrolledCourses.includes(course.id)} appLanguage={language} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        );
+    }
+    if (view === 'pricing') {
+        return (
+            <section id="pricing" className="py-24 bg-slate-900 text-white">
+                <div className="max-w-7xl mx-auto px-4 text-center">
+                    <h2 className="text-4xl font-extrabold mb-12">{t.pricing_title}</h2>
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {PLANS.map(plan => (
+                            <div key={plan.name} className={`bg-slate-800 p-8 rounded-[2.5rem] border ${plan.popular ? 'border-indigo-500 scale-105' : 'border-slate-700'}`}>
+                                <h3 className="text-xl font-bold mb-4">{plan.name}</h3>
+                                <div className="text-4xl font-black mb-6">{plan.price}</div>
+                                <button className="w-full bg-indigo-600 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">{t.btn_get_started}</button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     return (
       <>
-        {user ? renderDashboard() : renderHero()}
-        {renderCourses()}
-        {renderPricing()}
+        {user ? null : renderHero()}
+        <section id="courses" className="py-24 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">{t.featured_courses}</h2>
+                        <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                        {courses.map(course => (
+                            <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
+                                <CourseCard course={course} onEnroll={(id) => enrollInCourse({ stopPropagation: () => {} } as any, id)} isEnrolled={enrolledCourses.includes(course.id)} appLanguage={language} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+        </section>
       </>
     );
   };
@@ -290,13 +297,7 @@ const App: React.FC = () => {
         <Navbar 
           user={user} 
           onLogout={handleLogout} 
-          onLogin={(role) => {
-            if (view === 'landing' || view === 'courses' || view === 'pricing') {
-              setShowLogin(true);
-            } else {
-              handleLogin(role);
-            }
-          }} 
+          onLogin={(role) => setShowLogin(true)} 
           language={language}
           onLanguageChange={setLanguage}
           onNavigate={(v) => setView(v as ViewType)}
@@ -318,11 +319,13 @@ const App: React.FC = () => {
       )}
       
       <footer className="bg-slate-50 border-t border-slate-200 py-12">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-sm font-bold">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-[10px] font-black tracking-[0.2em] uppercase">
           <span>© 2023 EDUSTREAM ACADEMY. BUILT FOR GLOBAL LEARNERS.</span>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
-            <span>Local DB Connectivity: {isBackendConnected === true ? 'Active' : (isBackendConnected === false ? 'Offline (Demo Mode)' : 'Checking...')}</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${isBackendConnected ? 'bg-indigo-500 animate-pulse' : 'bg-slate-300'}`}></span>
+              <span>Backend: {isBackendConnected ? 'Connected' : 'Local Only'}</span>
+            </div>
           </div>
         </div>
       </footer>
