@@ -1,10 +1,9 @@
-// Added trailing slash to match the new proxy config in vite.config.ts
-const API_URL = '/api/';
+const API_URL = '/api';
 
 export const api = {
   // Auth
   login: async (credentials: any) => {
-    const res = await fetch(`${API_URL}auth/login`, {
+    const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials)
@@ -15,13 +14,13 @@ export const api = {
 
   // Courses
   getCourses: async () => {
-    const res = await fetch(`${API_URL}courses`);
+    const res = await fetch(`${API_URL}/courses`);
     if (!res.ok) throw new Error('Failed to fetch courses');
     return res.json();
   },
 
   createCourse: async (courseData: any) => {
-    const res = await fetch(`${API_URL}courses`, {
+    const res = await fetch(`${API_URL}/courses`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(courseData)
@@ -32,13 +31,13 @@ export const api = {
 
   // Quizzes
   getQuizzes: async (courseId: string) => {
-    const res = await fetch(`${API_URL}quizzes/${courseId}`);
+    const res = await fetch(`${API_URL}/quizzes/${courseId}`);
     if (!res.ok) throw new Error('Failed to fetch quizzes');
     return res.json();
   },
 
   createQuiz: async (quizData: any) => {
-    const res = await fetch(`${API_URL}quizzes`, {
+    const res = await fetch(`${API_URL}/quizzes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(quizData)
@@ -49,13 +48,13 @@ export const api = {
 
   // Homework
   getHomework: async (courseId: string) => {
-    const res = await fetch(`${API_URL}homework/${courseId}`);
+    const res = await fetch(`${API_URL}/homework/${courseId}`);
     if (!res.ok) throw new Error('Failed to fetch homework');
     return res.json();
   },
 
   createHomework: async (hwData: any) => {
-    const res = await fetch(`${API_URL}homework`, {
+    const res = await fetch(`${API_URL}/homework`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(hwData)

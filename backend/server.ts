@@ -3,37 +3,32 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-// Be explicit with the extension to avoid resolution conflicts with root models.ts
-import { User, Course, Quiz, Homework } from './models.js';
+// Use the local models file in the backend directory
+import { User, Course, Quiz, Homework } from './models';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = 'your_super_secret_key_123';
 
-// Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
 
-// Basic Security Headers
-app.use((req, res, next) => {
-  res.setHeader("Content-Security-Policy", "default-src * 'unsafe-inline' 'unsafe-eval'; img-src * data:; font-src *; connect-src *;");
-  next();
+// Root route to confirm backend is reachable
+app.get('/', (req, res) => {
+  res.json({ status: 'EduStream Backend Online', version: '1.0.0' });
 });
 
 const connectDB = async () => {
   try {
+    // Attempt connection to local MongoDB
     await mongoose.connect('mongodb://127.0.0.1:27017/edustream');
     console.log('✅ Connected to local MongoDB');
   } catch (err) {
-    console.warn('⚠️ Local MongoDB not found. Backend will run, but database operations will fail.');
+    console.warn('⚠️ MongoDB connection failed. Make sure MongoDB is running locally on port 27017.');
   }
 };
 
 connectDB();
-
-app.get('/', (req, res) => {
-  res.json({ message: 'EduStream API is online' });
-});
 
 // Auth Routes
 app.post('/api/auth/login', async (req, res) => {
@@ -46,7 +41,7 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
     res.json({ token, user: { id: user._id, name: user.name, role: user.role, email: user.email, avatar: user.avatar } });
   } catch (err) {
-    res.status(500).json({ error: 'Auth error' });
+    res.status(500).json({ error: 'Auth server error' });
   }
 });
 
@@ -56,7 +51,7 @@ app.get('/api/courses', async (req, res) => {
     const courses = await Course.find();
     res.json(courses);
   } catch (err) {
-    res.status(500).json({ error: 'Fetch error' });
+    res.status(500).json({ error: 'Database fetch error' });
   }
 });
 
@@ -66,7 +61,7 @@ app.post('/api/courses', async (req, res) => {
     await course.save();
     res.status(201).json(course);
   } catch (err) {
-    res.status(500).json({ error: 'Save error' });
+    res.status(500).json({ error: 'Database save error' });
   }
 });
 

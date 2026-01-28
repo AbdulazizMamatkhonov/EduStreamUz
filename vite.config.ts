@@ -7,8 +7,8 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
-      // Using /api/ with a trailing slash prevents intercepting files like apiService.ts
-      '/api/': {
+      // Proxy only actual API data calls
+      '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
