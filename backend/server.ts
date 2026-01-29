@@ -36,27 +36,17 @@ const MASTER_ADMIN = {
 
 const ensureMasterAdmin = async () => {
   try {
-    const hashedPassword = await bcrypt.hash(MASTER_ADMIN.password, 10);
     const existingAdmin = await User.findOne({ email: MASTER_ADMIN.email });
-    if (!existingAdmin) {
-      await User.create({
-        name: MASTER_ADMIN.name,
-        email: MASTER_ADMIN.email,
-        password: hashedPassword,
-        role: 'admin',
-        avatar: `https://i.pravatar.cc/150?u=${MASTER_ADMIN.email}`
-      });
-      console.log('✅ Master admin account created');
-      return;
-    }
-    if (existingAdmin.role !== 'admin' || !(await bcrypt.compare(MASTER_ADMIN.password, existingAdmin.password))) {
-      existingAdmin.name = MASTER_ADMIN.name;
-      existingAdmin.role = 'admin';
-      existingAdmin.password = hashedPassword;
-      existingAdmin.avatar = `https://i.pravatar.cc/150?u=${MASTER_ADMIN.email}`;
-      await existingAdmin.save();
-      console.log('✅ Master admin account updated');
-    }
+    if (existingAdmin) return;
+    const hashedPassword = await bcrypt.hash(MASTER_ADMIN.password, 10);
+    await User.create({
+      name: MASTER_ADMIN.name,
+      email: MASTER_ADMIN.email,
+      password: hashedPassword,
+      role: 'admin',
+      avatar: `https://i.pravatar.cc/150?u=${MASTER_ADMIN.email}`
+    });
+    console.log('✅ Master admin account created');
   } catch (err) {
     console.warn('⚠️ Unable to create master admin account.');
   }
