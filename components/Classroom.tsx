@@ -16,8 +16,8 @@ const Classroom: React.FC<ClassroomProps> = ({ course, onExit, appLanguage }) =>
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'resources' | 'participants'>('chat');
   
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const screenRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const screenRef = useRef<HTMLVideoElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
 

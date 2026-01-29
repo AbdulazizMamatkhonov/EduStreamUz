@@ -1,6 +1,7 @@
 export enum UserRole {
   STUDENT = 'student',
-  TEACHER = 'teacher'
+  TEACHER = 'teacher',
+  ADMIN = 'admin'
 }
 
 export enum SubscriptionPlan {
