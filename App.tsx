@@ -34,7 +34,7 @@ const App: React.FC = () => {
         }
         setIsBackendConnected(true);
       } catch (err) {
-        console.warn("Backend not reachable or empty. Using mock data.");
+        console.warn('Backend not reachable or empty. Using mock data.');
         setIsBackendConnected(false);
       } finally {
         setIsLoading(false);
@@ -51,15 +51,19 @@ const App: React.FC = () => {
     } catch (err) {
       const isTeacher = payload.role === UserRole.TEACHER;
       const isAdmin = payload.role === UserRole.ADMIN;
+
       setUser({
         id: isAdmin ? 'a1' : isTeacher ? 't1' : 's1',
         name: isAdmin ? 'Admin User' : isTeacher ? 'Sarah Jenkins' : 'Alex Student',
-        email: payload.email || (isAdmin ? 'admin@edustream.com' : isTeacher ? 'sarah@edustream.com' : 'student@edustream.com'),
+        email:
+          payload.email ||
+          (isAdmin ? 'admin@edustream.com' : isTeacher ? 'sarah@edustream.com' : 'student@edustream.com'),
         role: payload.role,
         avatar: `https://i.pravatar.cc/150?u=${isAdmin ? 'admin' : isTeacher ? 'teacher' : 'student'}`,
-        subscription: isTeacher || isAdmin ? undefined : SubscriptionPlan.PRO
+        subscription: isTeacher || isAdmin ? undefined : SubscriptionPlan.PRO,
       });
     }
+
     setShowLogin(false);
     setView('dashboard');
   };
@@ -70,14 +74,14 @@ const App: React.FC = () => {
       setUser(data.user);
       localStorage.setItem('token', data.token);
     } catch (err) {
-      const isTeacher = payload.role === UserRole.TEACHER;
+      // UI only allows student signup; keep fallback simple
       setUser({
-        id: isTeacher ? 't1' : 's1',
-        name: payload.name || (isTeacher ? 'Sarah Jenkins' : 'Alex Student'),
-        email: payload.email,
-        role: payload.role,
-        avatar: `https://i.pravatar.cc/150?u=${payload.email || (isTeacher ? 'teacher' : 'student')}`,
-        subscription: isTeacher ? undefined : SubscriptionPlan.FREE
+        id: 's1',
+        name: payload.name || 'Alex Student',
+        email: payload.email || 'student@edustream.com',
+        role: UserRole.STUDENT,
+        avatar: `https://i.pravatar.cc/150?u=${payload.email || 'student'}`,
+        subscription: SubscriptionPlan.FREE,
       });
     }
 
@@ -99,30 +103,39 @@ const App: React.FC = () => {
       const saved = await api.createCourse(newCourse);
       setCourses((prev: Course[]) => [saved, ...prev]);
     } catch (err) {
-      setCourses((prev: Course[]) => [{...newCourse, id: Date.now().toString()}, ...prev]);
+      setCourses((prev: Course[]) => [{ ...newCourse, id: Date.now().toString() }, ...prev]);
     }
   };
 
   const t = translations[language];
 
   const enrollInCourse = async (e: React.MouseEvent, courseId: string) => {
-    if (e && e.stopPropagation) e.stopPropagation(); 
+    if (e && (e as any).stopPropagation) e.stopPropagation();
     if (!user) {
       setShowLogin(true);
       return;
     }
-    if (!enrolledCourses.includes(courseId)) {
-      setEnrolledCourses((prev: string[]) => [...prev, courseId]);
-      try {
-        const updated = await api.enrollCourse(courseId);
-        setCourses((prev: Course[]) =>
-          prev.map(course => (course.id === updated._id || course.id === updated.id ? { ...course, studentsCount: updated.studentsCount } : course))
-        );
-      } catch (err) {
-        setCourses((prev: Course[]) =>
-          prev.map(course => (course.id === courseId ? { ...course, studentsCount: course.studentsCount + 1 } : course))
-        );
-      }
+
+    if (enrolledCourses.includes(courseId)) return;
+
+    setEnrolledCourses((prev: string[]) => [...prev, courseId]);
+
+    // optional backend enrollment (safe fallback if endpoint not available)
+    try {
+      const updated = await api.enrollCourse(courseId);
+      setCourses((prev: Course[]) =>
+        prev.map((course) =>
+          course.id === updated._id || course.id === updated.id
+            ? { ...course, studentsCount: updated.studentsCount }
+            : course
+        )
+      );
+    } catch (err) {
+      setCourses((prev: Course[]) =>
+        prev.map((course) =>
+          course.id === courseId ? { ...course, studentsCount: (course.studentsCount || 0) + 1 } : course
+        )
+      );
     }
   };
 
@@ -141,17 +154,21 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-500 font-bold animate-pulse uppercase tracking-widest text-xs">Initializing EduStream...</p>
+          <p className="text-slate-500 font-bold animate-pulse uppercase tracking-widest text-xs">
+            Initializing EduStream...
+          </p>
         </div>
       </div>
     );
   }
 
   const mainView = () => {
+    // Classroom
     if (view === 'classroom' && activeClassroom) {
       return <Classroom course={activeClassroom} onExit={() => setView('dashboard')} appLanguage={language} />;
     }
 
+    // Course details
     if (view === 'course-details' && selectedCourse) {
       return (
         <CourseDetails
@@ -165,13 +182,13 @@ const App: React.FC = () => {
       );
     }
 
+    // Dashboard
     if (view === 'dashboard' && user) {
-        if (user.role === UserRole.ADMIN) {
-            return <AdminDashboard user={user} appLanguage={language} />;
-        }
-        if (user.role === UserRole.TEACHER) {
-            return <TeacherDashboard user={user} appLanguage={language} onStartSession={joinClassroom} onCreateCourse={handleCreateCourse} courses={courses} />;
-        }
+      if (user.role === UserRole.ADMIN) {
+        return <AdminDashboard user={user} appLanguage={language} />;
+      }
+
+      if (user.role === UserRole.TEACHER) {
         return (
           <TeacherDashboard
             user={user}
@@ -183,6 +200,7 @@ const App: React.FC = () => {
         );
       }
 
+      // Student dashboard
       return (
         <section className="py-12 bg-slate-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -236,32 +254,11 @@ const App: React.FC = () => {
                       </div>
                     ))}
                 </div>
-                <div className="mt-16">
-                  <h3 className="text-2xl font-bold text-slate-900 mb-8">{t.course_progress}</h3>
-                  {enrolledCourses.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {courses.filter((c: Course) => enrolledCourses.includes(c.id)).map((course: Course) => (
-                          <div key={course.id} className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => viewCourse(course)}>
-                            <div className="w-24 h-24 flex-shrink-0 rounded-2xl overflow-hidden shadow-sm">
-                              <img src={course.thumbnail} className="w-full h-full object-cover" alt="" />
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-bold text-slate-900 text-lg mb-4">{course.title}</h4>
-                              <button 
-                                onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); joinClassroom(course); }}
-                                className="text-xs font-bold text-white bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
-                              >
-                                {t.continue_learning}
-                              </button>
-                            </div>
-                          </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="bg-white rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-200 text-slate-400">
-                      <button onClick={() => setView('courses')} className="font-bold text-indigo-600 hover:underline">{t.btn_find_course}</button>
-                    </div>
-                  )}
+              ) : (
+                <div className="bg-white rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-200 text-slate-400">
+                  <button onClick={() => setView('courses')} className="font-bold text-indigo-600 hover:underline">
+                    {t.btn_find_course}
+                  </button>
                 </div>
               )}
             </div>
@@ -270,21 +267,24 @@ const App: React.FC = () => {
       );
     }
 
+    // Courses page
     if (view === 'courses') {
-        return (
-            <section id="courses" className="py-24 bg-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">{t.featured_courses}</h2>
-                        <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                        {courses.map((course: Course) => (
-                            <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
-                                <CourseCard course={course} onEnroll={(id: string) => enrollInCourse({ stopPropagation: () => {} } as React.MouseEvent, id)} isEnrolled={enrolledCourses.includes(course.id)} appLanguage={language} />
-                            </div>
-                        ))}
-                    </div>
+      return (
+        <section id="courses" className="py-24 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">{t.featured_courses}</h2>
+              <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {courses.map((course: Course) => (
+                <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
+                  <CourseCard
+                    course={course}
+                    onEnroll={(id: string) => enrollInCourse({ stopPropagation: () => {} } as React.MouseEvent, id)}
+                    isEnrolled={enrolledCourses.includes(course.id)}
+                    appLanguage={language}
+                  />
                 </div>
               ))}
             </div>
@@ -293,13 +293,14 @@ const App: React.FC = () => {
       );
     }
 
+    // Pricing page
     if (view === 'pricing') {
       return (
         <section id="pricing" className="py-24 bg-slate-900 text-white">
           <div className="max-w-7xl mx-auto px-4 text-center">
             <h2 className="text-4xl font-extrabold mb-12">{t.pricing_title}</h2>
             <div className="grid md:grid-cols-3 gap-8">
-              {PLANS.map(plan => (
+              {PLANS.map((plan) => (
                 <div
                   key={plan.name}
                   className={`bg-slate-800 p-8 rounded-[2.5rem] border ${
@@ -319,6 +320,7 @@ const App: React.FC = () => {
       );
     }
 
+    // Landing
     return (
       <>
         {user ? null : (
@@ -379,11 +381,16 @@ const App: React.FC = () => {
               <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {courses.map((course: Course) => (
-                    <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
-                        <CourseCard course={course} onEnroll={(id: string) => enrollInCourse({ stopPropagation: () => {} } as React.MouseEvent, id)} isEnrolled={enrolledCourses.includes(course.id)} appLanguage={language} />
-                    </div>
-                ))}
+              {courses.map((course: Course) => (
+                <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
+                  <CourseCard
+                    course={course}
+                    onEnroll={(id: string) => enrollInCourse({ stopPropagation: () => {} } as React.MouseEvent, id)}
+                    isEnrolled={enrolledCourses.includes(course.id)}
+                    appLanguage={language}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -409,12 +416,7 @@ const App: React.FC = () => {
       <main className="flex-1">{mainView()}</main>
 
       {showLogin && (
-        <LoginPage 
-          onLogin={handleLogin}
-          onRegister={handleRegister}
-          appLanguage={language} 
-          onClose={() => setShowLogin(false)} 
-        />
+        <LoginPage onLogin={handleLogin} onRegister={handleRegister} appLanguage={language} onClose={() => setShowLogin(false)} />
       )}
 
       <footer className="bg-slate-50 border-t border-slate-200 py-12">
