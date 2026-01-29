@@ -50,6 +50,14 @@ export const api = {
     if (!res.ok) throw new Error('Failed to create course');
     return res.json();
   },
+  enrollCourse: async (courseId: string) => {
+    const res = await fetch(`${API_URL}courses/${courseId}/enroll`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Failed to enroll');
+    return res.json();
+  },
 
   // Quizzes
   getQuizzes: async (courseId: string) => {

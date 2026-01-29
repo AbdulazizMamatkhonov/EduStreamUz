@@ -46,6 +46,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, appLanguage }) =>
           <p className="text-slate-500 font-medium">
             {t.welcome_back}, {user.name}. Manage teacher access here.
           </p>
+          <p className="text-xs text-slate-400 font-semibold">
+            Default admin: admin@edustream.com / password123
+          </p>
         </div>
         <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8">
           <h3 className="text-xl font-bold text-slate-900 mb-6">Add a Teacher Account</h3>
