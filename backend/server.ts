@@ -46,30 +46,44 @@ app.post('/api/auth/login', async (req: any, res: any) => {
 
 app.post('/api/auth/register', async (req: any, res: any) => {
   try {
-    const { name, email, password } = req.body;
     const { name, email, password, role } = req.body;
+
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(409).json({ error: 'Email already in use' });
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: 'student',
-      role: role || 'student',
+      role: role || 'student', // single role assignment
       avatar: `https://i.pravatar.cc/150?u=${email}`
     });
+
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-    res.status(201).json({ token, user: { id: user._id, name: user.name, role: user.role, email: user.email, avatar: user.avatar } });
+
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        role: user.role,
+        email: user.email,
+        avatar: user.avatar
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 const getUserFromAuthHeader = async (req: any) => {
   const authHeader = req.headers?.authorization || '';
