@@ -20,6 +20,19 @@ export const api = {
     if (!res.ok) throw new Error('Registration failed');
     return res.json();
   },
+  createTeacher: async (payload: any) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}admin/teachers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to create teacher');
+    return res.json();
+  },
 
   // Courses
   getCourses: async () => {

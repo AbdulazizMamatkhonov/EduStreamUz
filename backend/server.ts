@@ -46,6 +46,7 @@ app.post('/api/auth/login', async (req: any, res: any) => {
 
 app.post('/api/auth/register', async (req: any, res: any) => {
   try {
+    const { name, email, password } = req.body;
     const { name, email, password, role } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -59,11 +60,53 @@ app.post('/api/auth/register', async (req: any, res: any) => {
       name,
       email,
       password: hashedPassword,
+      role: 'student',
       role: role || 'student',
       avatar: `https://i.pravatar.cc/150?u=${email}`
     });
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
     res.status(201).json({ token, user: { id: user._id, name: user.name, role: user.role, email: user.email, avatar: user.avatar } });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+const getUserFromAuthHeader = async (req: any) => {
+  const authHeader = req.headers?.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
+    const user = await User.findById(decoded.id);
+    return user;
+  } catch (err) {
+    return null;
+  }
+};
+
+app.post('/api/admin/teachers', async (req: any, res: any) => {
+  try {
+    const adminUser = await getUserFromAuthHeader(req);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Admins only' });
+    }
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(409).json({ error: 'Email already in use' });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'teacher',
+      avatar: `https://i.pravatar.cc/150?u=${email}`
+    });
+    res.status(201).json({ user: { id: user._id, name: user.name, role: user.role, email: user.email, avatar: user.avatar } });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }

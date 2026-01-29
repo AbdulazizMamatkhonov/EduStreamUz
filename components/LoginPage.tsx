@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserRole, AppLanguage } from '../types';
 import { translations } from '../translations';
 
@@ -20,6 +20,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
     password: ''
   });
 
+  useEffect(() => {
+    if (isSignUp) {
+      setActiveTab(UserRole.STUDENT);
+    }
+  }, [isSignUp]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormValues(prev => ({ ...prev, [name]: value }));
@@ -27,6 +33,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
 
   const handleSubmit = () => {
     if (isSignUp) {
+      onRegister({ ...formValues, role: UserRole.STUDENT });
+      return;
+    }
+    const fallbackEmail = activeTab === UserRole.STUDENT
+      ? 'student@edustream.com'
+      : activeTab === UserRole.TEACHER
+        ? 'teacher@edustream.com'
+        : 'admin@edustream.com';
+    onLogin({
+      email: formValues.email || fallbackEmail,
       onRegister({ ...formValues, role: activeTab });
       return;
     }
@@ -54,6 +70,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
           
           <h2 className="text-3xl font-black text-slate-900 mb-2">{isSignUp ? 'Create your account' : 'Welcome Back'}</h2>
           <p className="text-slate-500 font-medium mb-8">
+            {isSignUp ? 'Student registration only. Teachers are added by admins.' : 'Login to your EduStream account'}
             {isSignUp ? 'Join EduStream to access live courses.' : 'Login to your EduStream account'}
           </p>
           
@@ -66,9 +83,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
             </button>
             <button 
               onClick={() => setActiveTab(UserRole.TEACHER)}
-              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === UserRole.TEACHER ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              disabled={isSignUp}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === UserRole.TEACHER ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'} ${isSignUp ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {t.btn_teacher_access}
+            </button>
+            <button 
+              onClick={() => setActiveTab(UserRole.ADMIN)}
+              disabled={isSignUp}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === UserRole.ADMIN ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'} ${isSignUp ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              Admin
             </button>
           </div>
           
@@ -114,6 +139,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
             onClick={handleSubmit}
             className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl mt-8 shadow-xl shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all"
           >
+            {isSignUp ? 'Create Account' : `Login as ${activeTab === UserRole.STUDENT ? 'Student' : activeTab === UserRole.TEACHER ? 'Teacher' : 'Admin'}`}
             {isSignUp ? 'Create Account' : `Login as ${activeTab === UserRole.STUDENT ? 'Student' : 'Teacher'}`}
           </button>
           

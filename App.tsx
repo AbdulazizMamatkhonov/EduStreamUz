@@ -9,6 +9,7 @@ import Classroom from './components/Classroom';
 import TeacherDashboard from './components/TeacherDashboard';
 import LoginPage from './components/LoginPage';
 import CourseDetails from './components/CourseDetails';
+import AdminDashboard from './components/AdminDashboard';
 import { api } from './apiService';
 
 type ViewType = 'landing' | 'courses' | 'pricing' | 'dashboard' | 'course-details' | 'classroom';
@@ -50,6 +51,34 @@ const App: React.FC = () => {
       localStorage.setItem('token', data.token);
     } catch (err) {
       const isTeacher = payload.role === UserRole.TEACHER;
+      const isAdmin = payload.role === UserRole.ADMIN;
+      setUser({
+        id: isAdmin ? 'a1' : isTeacher ? 't1' : 's1',
+        name: isAdmin ? 'Admin User' : isTeacher ? 'Sarah Jenkins' : 'Alex Student',
+        email: payload.email || (isAdmin ? 'admin@edustream.com' : isTeacher ? 'sarah@edustream.com' : 'student@edustream.com'),
+        role: payload.role,
+        avatar: `https://i.pravatar.cc/150?u=${isAdmin ? 'admin' : isTeacher ? 'teacher' : 'student'}`,
+        subscription: isTeacher || isAdmin ? undefined : SubscriptionPlan.PRO
+      });
+    }
+    setShowLogin(false);
+    setView('dashboard');
+  };
+
+  const handleRegister = async (payload: { name: string; email: string; password: string; role: UserRole }) => {
+    try {
+      const data = await api.register(payload);
+      setUser(data.user);
+      localStorage.setItem('token', data.token);
+    } catch (err) {
+      const isTeacher = payload.role === UserRole.TEACHER;
+      setUser({
+        id: isTeacher ? 't1' : 's1',
+        name: payload.name || (isTeacher ? 'Sarah Jenkins' : 'Alex Student'),
+        email: payload.email,
+        role: payload.role,
+        avatar: `https://i.pravatar.cc/150?u=${payload.email || (isTeacher ? 'teacher' : 'student')}`,
+        subscription: isTeacher ? undefined : SubscriptionPlan.FREE
       setUser({
         id: isTeacher ? 't1' : 's1',
         name: isTeacher ? 'Sarah Jenkins' : 'Alex Student',
@@ -152,6 +181,9 @@ const App: React.FC = () => {
       );
     }
     if (view === 'dashboard' && user) {
+        if (user.role === UserRole.ADMIN) {
+            return <AdminDashboard user={user} appLanguage={language} />;
+        }
         if (user.role === UserRole.TEACHER) {
             return <TeacherDashboard user={user} appLanguage={language} onStartSession={joinClassroom} onCreateCourse={handleCreateCourse} courses={courses} />;
         }
