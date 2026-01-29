@@ -30,7 +30,11 @@ const App: React.FC = () => {
       try {
         const data = await api.getCourses();
         if (data && Array.isArray(data) && data.length > 0) {
-          setCourses(data);
+          const normalized = data.map((course: Course & { _id?: string }) => ({
+            ...course,
+            id: course.id || course._id || course.title
+          }));
+          setCourses(normalized);
         }
         setIsBackendConnected(true);
       } catch (err) {
