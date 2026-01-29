@@ -47,6 +47,7 @@ app.post('/api/auth/login', async (req: any, res: any) => {
 app.post('/api/auth/register', async (req: any, res: any) => {
   try {
     const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -60,6 +61,7 @@ app.post('/api/auth/register', async (req: any, res: any) => {
       email,
       password: hashedPassword,
       role: 'student',
+      role: role || 'student',
       avatar: `https://i.pravatar.cc/150?u=${email}`
     });
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });

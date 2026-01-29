@@ -43,6 +43,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
         : 'admin@edustream.com';
     onLogin({
       email: formValues.email || fallbackEmail,
+      onRegister({ ...formValues, role: activeTab });
+      return;
+    }
+    onLogin({
+      email: formValues.email || (activeTab === UserRole.STUDENT ? 'student@edustream.com' : 'teacher@edustream.com'),
       password: formValues.password || 'password123',
       role: activeTab
     });
@@ -66,6 +71,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
           <h2 className="text-3xl font-black text-slate-900 mb-2">{isSignUp ? 'Create your account' : 'Welcome Back'}</h2>
           <p className="text-slate-500 font-medium mb-8">
             {isSignUp ? 'Student registration only. Teachers are added by admins.' : 'Login to your EduStream account'}
+            {isSignUp ? 'Join EduStream to access live courses.' : 'Login to your EduStream account'}
           </p>
           
           <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
@@ -134,6 +140,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
             className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl mt-8 shadow-xl shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all"
           >
             {isSignUp ? 'Create Account' : `Login as ${activeTab === UserRole.STUDENT ? 'Student' : activeTab === UserRole.TEACHER ? 'Teacher' : 'Admin'}`}
+            {isSignUp ? 'Create Account' : `Login as ${activeTab === UserRole.STUDENT ? 'Student' : 'Teacher'}`}
           </button>
           
           <p className="mt-8 text-sm text-slate-500">
