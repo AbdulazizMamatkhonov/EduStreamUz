@@ -36,17 +36,27 @@ const MASTER_ADMIN = {
 
 const ensureMasterAdmin = async () => {
   try {
-    const existingAdmin = await User.findOne({ email: MASTER_ADMIN.email });
-    if (existingAdmin) return;
     const hashedPassword = await bcrypt.hash(MASTER_ADMIN.password, 10);
-    await User.create({
-      name: MASTER_ADMIN.name,
-      email: MASTER_ADMIN.email,
-      password: hashedPassword,
-      role: 'admin',
-      avatar: `https://i.pravatar.cc/150?u=${MASTER_ADMIN.email}`
-    });
-    console.log('✅ Master admin account created');
+    const existingAdmin = await User.findOne({ email: MASTER_ADMIN.email });
+    if (!existingAdmin) {
+      await User.create({
+        name: MASTER_ADMIN.name,
+        email: MASTER_ADMIN.email,
+        password: hashedPassword,
+        role: 'admin',
+        avatar: `https://i.pravatar.cc/150?u=${MASTER_ADMIN.email}`
+      });
+      console.log('✅ Master admin account created');
+      return;
+    }
+    if (existingAdmin.role !== 'admin' || !(await bcrypt.compare(MASTER_ADMIN.password, existingAdmin.password))) {
+      existingAdmin.name = MASTER_ADMIN.name;
+      existingAdmin.role = 'admin';
+      existingAdmin.password = hashedPassword;
+      existingAdmin.avatar = `https://i.pravatar.cc/150?u=${MASTER_ADMIN.email}`;
+      await existingAdmin.save();
+      console.log('✅ Master admin account updated');
+    }
   } catch (err) {
     console.warn('⚠️ Unable to create master admin account.');
   }
@@ -56,9 +66,12 @@ connectDB().then(ensureMasterAdmin);
 
 app.post('/api/auth/login', async (req: any, res: any) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
+    if (!email || !password || !role) {
+      return res.status(400).json({ error: 'Missing credentials' });
+    }
     const user = await User.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || user.role !== role || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
