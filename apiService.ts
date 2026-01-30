@@ -11,6 +11,28 @@ export const api = {
     if (!res.ok) throw new Error('Login failed');
     return res.json();
   },
+  register: async (payload: any) => {
+    const res = await fetch(`${API_URL}auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Registration failed');
+    return res.json();
+  },
+  createTeacher: async (payload: any) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}admin/teachers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to create teacher');
+    return res.json();
+  },
 
   // Courses
   getCourses: async () => {
@@ -26,6 +48,14 @@ export const api = {
       body: JSON.stringify(courseData)
     });
     if (!res.ok) throw new Error('Failed to create course');
+    return res.json();
+  },
+  enrollCourse: async (courseId: string) => {
+    const res = await fetch(`${API_URL}courses/${courseId}/enroll`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Failed to enroll');
     return res.json();
   },
 
