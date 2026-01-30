@@ -266,7 +266,7 @@ const App: React.FC = () => {
                               </button>
                             </div>
                           </div>
-                      ))}
+                        ))}
                     </div>
                   ) : (
                     <div className="bg-white rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-200 text-slate-400">
