@@ -24,7 +24,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onLogin, language, onLa
     { code: 'uz', label: "O'zbek", flag: '🇺🇿' },
   ];
 
-  const handleLinkClick = (e: React.MouseEvent, view: string) => {
+  const handleLinkClick = (e: React.MouseEvent<HTMLButtonElement>, view: string) => {
     e.preventDefault();
     onNavigate(view);
   };
@@ -44,19 +44,19 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onLogin, language, onLa
             </div>
             <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
               <button 
-                onClick={(e) => handleLinkClick(e, 'landing')}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleLinkClick(e, 'landing')}
                 className={`${currentView === 'landing' ? 'border-indigo-500 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors h-16`}
               >
                 {t.nav_home}
               </button>
               <button 
-                onClick={(e) => handleLinkClick(e, 'courses')}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleLinkClick(e, 'courses')}
                 className={`${currentView === 'courses' ? 'border-indigo-500 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors h-16`}
               >
                 {t.nav_courses}
               </button>
               <button 
-                onClick={(e) => handleLinkClick(e, 'pricing')}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleLinkClick(e, 'pricing')}
                 className={`${currentView === 'pricing' ? 'border-indigo-500 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors h-16`}
               >
                 {t.nav_pricing}
