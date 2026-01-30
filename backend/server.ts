@@ -70,8 +70,8 @@ app.post('/api/auth/login', async (req: any, res: any) => {
     if (!email || !password || !role) {
       return res.status(400).json({ error: 'Missing credentials' });
     }
-    const user = await User.findOne({ email, role });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    const user = await User.findOne({ email });
+    if (!user || user.role !== role || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
