@@ -1,36 +1,30 @@
-import React, { useState, useEffect } from "react";
-import { User, UserRole, SubscriptionPlan, AppLanguage, Course } from "./types";
-import { PLANS, MOCK_COURSES } from "./constants";
-import { translations } from "./translations";
-import Navbar from "./components/Navbar";
-import CourseCard from "./components/CourseCard";
-import Classroom from "./components/Classroom";
-import TeacherDashboard from "./components/TeacherDashboard";
-import LoginPage from "./components/LoginPage";
-import CourseDetails from "./components/CourseDetails";
-import AdminDashboard from "./components/AdminDashboard";
-import { api } from "./apiService";
-const APP_VERSION = 1.5;
-type ViewType =
-  | "landing"
-  | "courses"
-  | "pricing"
-  | "dashboard"
-  | "course-details"
-  | "classroom";
+
+import React, { useState, useEffect } from 'react';
+import { User, UserRole, SubscriptionPlan, AppLanguage, Course } from './types';
+import { PLANS, APP_VERSION } from './constants';
+import { translations } from './translations';
+import Navbar from './components/Navbar';
+import CourseCard from './components/CourseCard';
+import Classroom from './components/Classroom';
+import TeacherDashboard from './components/TeacherDashboard';
+import LoginPage from './components/LoginPage';
+import CourseDetails from './components/CourseDetails';
+import AdminDashboard from './components/AdminDashboard';
+import { api } from './apiService';
+
+type ViewType = 'landing' | 'courses' | 'pricing' | 'dashboard' | 'course-details' | 'classroom';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [courses, setCourses] = useState<Course[]>(MOCK_COURSES);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [enrolledCourses, setEnrolledCourses] = useState<string[]>([]);
   const [language, setLanguage] = useState<AppLanguage>("en");
   const [view, setView] = useState<ViewType>("landing");
   const [activeClassroom, setActiveClassroom] = useState<Course | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showLogin, setShowLogin] = useState(false);
-  const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(
-    null
-  );
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -40,13 +34,13 @@ const App: React.FC = () => {
         if (data && Array.isArray(data) && data.length > 0) {
           const normalized = data.map((course: Course & { _id?: string }) => ({
             ...course,
-            id: course.id || course._id || course.title,
+            id: course.id || course._id || course.title
           }));
           setCourses(normalized);
         }
         setIsBackendConnected(true);
       } catch (err) {
-        console.warn("Backend not reachable or empty. Using mock data.");
+        console.warn("Backend not reachable or empty.");
         setIsBackendConnected(false);
       } finally {
         setIsLoading(false);
@@ -55,73 +49,57 @@ const App: React.FC = () => {
     initApp();
   }, []);
 
-  const handleLogin = async (payload: {
-    email: string;
-    password: string;
-    role: UserRole;
-  }) => {
-    try {
-      const data = await api.login({
-        email: payload.email,
-        password: payload.password,
-        role: payload.role,
-      });
-      setUser(data.user);
-      localStorage.setItem("token", data.token);
-    } catch (err) {
-      const isTeacher = payload.role === UserRole.TEACHER;
-      const isAdmin = payload.role === UserRole.ADMIN;
-      setUser({
-        id: isAdmin ? "a1" : isTeacher ? "t1" : "s1",
-        name: isAdmin
-          ? "Admin User"
-          : isTeacher
-          ? "Sarah Jenkins"
-          : "Alex Student",
-        email:
-          payload.email ||
-          (isAdmin
-            ? "admin@edustream.com"
-            : isTeacher
-            ? "sarah@edustream.com"
-            : "student@edustream.com"),
-        role: payload.role,
-        avatar: `https://i.pravatar.cc/150?u=${
-          isAdmin ? "admin" : isTeacher ? "teacher" : "student"
-        }`,
-        subscription: isTeacher || isAdmin ? undefined : SubscriptionPlan.PRO,
-      });
+  const handleLogin = async (payload: { email: string; password: string; role: UserRole }) => {
+    setUser(null);
+    if (isBackendConnected === false) {
+      setAuthError('Backend is offline. Start the server and try again.');
+      setShowLogin(true);
+      return false;
     }
-    setShowLogin(false);
-    setView("dashboard");
+    try {
+      const data = await api.login({ email: payload.email, password: payload.password, role: payload.role });
+      if (!data?.user || data.user.role !== payload.role) {
+        throw new Error('Role mismatch');
+      }
+      setUser(data.user);
+      localStorage.setItem('token', data.token);
+      setAuthError(null);
+      setShowLogin(false);
+      setView('dashboard');
+      return true;
+    } catch (err) {
+      setAuthError('Invalid credentials for the selected role.');
+      setUser(null);
+      localStorage.removeItem('token');
+      setView('landing');
+      setShowLogin(true);
+      return false;
+    }
   };
 
-  const handleRegister = async (payload: {
-    name: string;
-    email: string;
-    password: string;
-    role: UserRole;
-  }) => {
+  const handleRegister = async (payload: { name: string; email: string; password: string; role: UserRole }) => {
+    setUser(null);
+    if (isBackendConnected === false) {
+      setAuthError('Backend is offline. Start the server and try again.');
+      setShowLogin(true);
+      return false;
+    }
     try {
       const data = await api.register(payload);
       setUser(data.user);
-      localStorage.setItem("token", data.token);
+      localStorage.setItem('token', data.token);
+      setAuthError(null);
+      setShowLogin(false);
+      setView('dashboard');
+      return true;
     } catch (err) {
-      const isTeacher = payload.role === UserRole.TEACHER;
-      setUser({
-        id: isTeacher ? "t1" : "s1",
-        name: payload.name || (isTeacher ? "Sarah Jenkins" : "Alex Student"),
-        email: payload.email,
-        role: payload.role,
-        avatar: `https://i.pravatar.cc/150?u=${
-          payload.email || (isTeacher ? "teacher" : "student")
-        }`,
-        subscription: isTeacher ? undefined : SubscriptionPlan.FREE,
-      });
+      setAuthError('Registration failed. Please try again.');
+      setUser(null);
+      localStorage.removeItem('token');
+      setView('landing');
+      setShowLogin(true);
+      return false;
     }
-
-    setShowLogin(false);
-    setView("dashboard");
   };
 
   const handleLogout = () => {
@@ -136,50 +114,33 @@ const App: React.FC = () => {
   const handleCreateCourse = async (newCourse: Course) => {
     try {
       const saved = await api.createCourse(newCourse);
-      const normalized = {
-        ...saved,
-        id: (saved as any).id || (saved as any)._id || newCourse.id,
-      };
+      const normalized = { ...saved, id: saved.id || saved._id || newCourse.id };
       setCourses((prev: Course[]) => [normalized, ...prev]);
     } catch (err) {
-      setCourses((prev: Course[]) => [
-        { ...newCourse, id: Date.now().toString() },
-        ...prev,
-      ]);
+      setCourses((prev: Course[]) => [{...newCourse, id: Date.now().toString()}, ...prev]);
     }
   };
 
   const t = translations[language];
 
   const enrollInCourse = async (e: React.MouseEvent, courseId: string) => {
-    if (e && (e as any).stopPropagation) e.stopPropagation();
+    if (e && e.stopPropagation) e.stopPropagation(); 
     if (!user) {
       setShowLogin(true);
       return;
     }
-
-    if (enrolledCourses.includes(courseId)) return;
-
-    setEnrolledCourses((prev: string[]) => [...prev, courseId]);
-
-    try {
-      const updated = await api.enrollCourse(courseId);
-      setCourses((prev: Course[]) =>
-        prev.map((course) =>
-          course.id === (updated as any)._id ||
-          course.id === (updated as any).id
-            ? { ...course, studentsCount: (updated as any).studentsCount }
-            : course
-        )
-      );
-    } catch (err) {
-      setCourses((prev: Course[]) =>
-        prev.map((course) =>
-          course.id === courseId
-            ? { ...course, studentsCount: (course.studentsCount || 0) + 1 }
-            : course
-        )
-      );
+    if (!enrolledCourses.includes(courseId)) {
+      setEnrolledCourses((prev: string[]) => [...prev, courseId]);
+      try {
+        const updated = await api.enrollCourse(courseId);
+        setCourses((prev: Course[]) =>
+          prev.map(course => (course.id === updated._id || course.id === updated.id ? { ...course, studentsCount: updated.studentsCount } : course))
+        );
+      } catch (err) {
+        setCourses((prev: Course[]) =>
+          prev.map(course => (course.id === courseId ? { ...course, studentsCount: course.studentsCount + 1 } : course))
+        );
+      }
     }
   };
 
@@ -224,26 +185,20 @@ const App: React.FC = () => {
         <CourseDetails
           course={selectedCourse}
           appLanguage={language}
-          onEnroll={(id: string) =>
-            enrollInCourse(
-              { stopPropagation: () => {} } as React.MouseEvent,
-              id
-            )
-          }
+          onEnroll={(id: string) => enrollInCourse({ stopPropagation: () => {} } as React.MouseEvent, id)}
           isEnrolled={enrolledCourses.includes(selectedCourse.id)}
           onJoin={() => joinClassroom(selectedCourse)}
           onBack={() => setView("courses")}
         />
       );
     }
-
-    // Dashboard
-    if (view === "dashboard" && user) {
-      if (user.role === UserRole.ADMIN) {
-        return <AdminDashboard user={user} appLanguage={language} />;
-      }
-
-      if (user.role === UserRole.TEACHER) {
+    if (view === 'dashboard' && user) {
+        if (user.role === UserRole.ADMIN) {
+            return <AdminDashboard user={user} appLanguage={language} />;
+        }
+        if (user.role === UserRole.TEACHER) {
+            return <TeacherDashboard user={user} appLanguage={language} onStartSession={joinClassroom} onCreateCourse={handleCreateCourse} courses={courses} />;
+        }
         return (
           <TeacherDashboard
             user={user}
@@ -325,14 +280,41 @@ const App: React.FC = () => {
                       </div>
                     ))}
                 </div>
-              ) : (
-                <div className="bg-white rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-200 text-slate-400">
-                  <button
-                    onClick={() => setView("courses")}
-                    className="font-bold text-indigo-600 hover:underline"
-                  >
-                    {t.btn_find_course}
-                  </button>
+                <div className="mt-16">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-8">{t.course_progress}</h3>
+                  {enrolledCourses.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {courses
+                        .filter((c: Course) => enrolledCourses.includes(c.id))
+                        .map((course: Course) => (
+                          <div
+                            key={course.id}
+                            className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-6 hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => viewCourse(course)}
+                          >
+                            <div className="w-24 h-24 flex-shrink-0 rounded-2xl overflow-hidden shadow-sm">
+                              <img src={course.thumbnail} className="w-full h-full object-cover" alt="" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-slate-900 text-lg mb-4">{course.title}</h4>
+                              <button
+                                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                                  e.stopPropagation();
+                                  joinClassroom(course);
+                                }}
+                                className="text-xs font-bold text-white bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
+                              >
+                                {t.continue_learning}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-[2.5rem] p-12 text-center border-2 border-dashed border-slate-200 text-slate-400">
+                      <button onClick={() => setView('courses')} className="font-bold text-indigo-600 hover:underline">{t.btn_find_course}</button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -340,39 +322,28 @@ const App: React.FC = () => {
         </section>
       );
     }
-
-    // Courses page
-    if (view === "courses") {
-      return (
-        <section id="courses" className="py-24 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">
-                {t.featured_courses}
-              </h2>
-              <p className="mt-4 text-xl text-slate-500 font-medium">
-                {t.courses_subtitle}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {courses.map((course: Course) => (
-                <div
-                  key={course.id}
-                  onClick={() => viewCourse(course)}
-                  className="cursor-pointer"
-                >
-                  <CourseCard
-                    course={course}
-                    onEnroll={(id: string) =>
-                      enrollInCourse(
-                        { stopPropagation: () => {} } as React.MouseEvent,
-                        id
-                      )
-                    }
-                    isEnrolled={enrolledCourses.includes(course.id)}
-                    appLanguage={language}
-                  />
+    if (view === 'courses') {
+        return (
+            <section id="courses" className="py-24 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">{t.featured_courses}</h2>
+                        <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
+                    </div>
+                    {courses.length === 0 ? (
+                      <div className="bg-white rounded-[2.5rem] p-12 text-center border border-dashed border-slate-200 text-slate-500">
+                        <p className="font-bold">No courses available.</p>
+                        <p className="text-sm mt-2">Start the backend server to load live courses.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                          {courses.map((course: Course) => (
+                              <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
+                                  <CourseCard course={course} onEnroll={(id: string) => enrollInCourse({ stopPropagation: () => {} } as React.MouseEvent, id)} isEnrolled={enrolledCourses.includes(course.id)} appLanguage={language} />
+                              </div>
+                          ))}
+                      </div>
+                    )}
                 </div>
               ))}
             </div>
@@ -422,9 +393,7 @@ const App: React.FC = () => {
                     <span className="w-2 h-2 bg-indigo-600 rounded-full mr-2 animate-ping"></span>
                     {t.hero_badge}
                   </span>
-                  <p className="text-xs font-semibold text-slate-400 mb-6">
-                    Version {APP_VERSION}
-                  </p>
+                  <p className="text-xs font-semibold text-slate-400 mb-6">Version {APP_VERSION}</p>
                   <h1 className="text-4xl tracking-tight font-extrabold text-slate-900 sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl leading-tight">
                     {t.hero_title.split("Live")[0]}
                     <span className="text-indigo-600 italic">Live</span>
@@ -479,27 +448,20 @@ const App: React.FC = () => {
                 {t.courses_subtitle}
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {courses.map((course: Course) => (
-                <div
-                  key={course.id}
-                  onClick={() => viewCourse(course)}
-                  className="cursor-pointer"
-                >
-                  <CourseCard
-                    course={course}
-                    onEnroll={(id: string) =>
-                      enrollInCourse(
-                        { stopPropagation: () => {} } as React.MouseEvent,
-                        id
-                      )
-                    }
-                    isEnrolled={enrolledCourses.includes(course.id)}
-                    appLanguage={language}
-                  />
-                </div>
-              ))}
-            </div>
+            {courses.length === 0 ? (
+              <div className="bg-white rounded-[2.5rem] p-12 text-center border border-dashed border-slate-200 text-slate-500">
+                <p className="font-bold">No courses available.</p>
+                <p className="text-sm mt-2">Start the backend server to load live courses.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                  {courses.map((course: Course) => (
+                      <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
+                          <CourseCard course={course} onEnroll={(id: string) => enrollInCourse({ stopPropagation: () => {} } as React.MouseEvent, id)} isEnrolled={enrolledCourses.includes(course.id)} appLanguage={language} />
+                      </div>
+                  ))}
+              </div>
+            )}
           </div>
         </section>
       </>
@@ -508,11 +470,15 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      {view !== "classroom" && (
-        <Navbar
-          user={user}
-          onLogout={handleLogout}
-          onLogin={() => setShowLogin(true)}
+      {view !== 'classroom' && (
+        <Navbar 
+          user={user} 
+          onLogout={handleLogout} 
+          onLogin={() => {
+            setAuthError(null);
+            setUser(null);
+            setShowLogin(true);
+          }} 
           language={language}
           onLanguageChange={setLanguage}
           onNavigate={(v) => setView(v as ViewType)}
@@ -524,20 +490,18 @@ const App: React.FC = () => {
       <main className="flex-1">{mainView()}</main>
 
       {showLogin && (
-        <LoginPage
+        <LoginPage 
           onLogin={handleLogin}
           onRegister={handleRegister}
-          appLanguage={language}
-          onClose={() => setShowLogin(false)}
+          appLanguage={language} 
+          onClose={() => setShowLogin(false)} 
+          errorMessage={authError}
         />
       )}
 
       <footer className="bg-slate-50 border-t border-slate-200 py-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-[10px] font-black tracking-[0.2em] uppercase">
-          <span>
-            © 2023 EDUSTREAM ACADEMY. BUILT FOR GLOBAL LEARNERS. Version{" "}
-            {APP_VERSION}
-          </span>
+          <span>© 2023 EDUSTREAM ACADEMY. BUILT FOR GLOBAL LEARNERS. Version {APP_VERSION}</span>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span

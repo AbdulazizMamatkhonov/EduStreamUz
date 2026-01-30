@@ -4,17 +4,18 @@ import { UserRole, AppLanguage } from '../types';
 import { translations } from '../translations';
 
 interface LoginPageProps {
-  onLogin: (payload: { email: string; password: string; role: UserRole }) => void;
-  onRegister: (payload: { name: string; email: string; password: string; role: UserRole }) => void;
+  onLogin: (payload: { email: string; password: string; role: UserRole }) => Promise<boolean>;
+  onRegister: (payload: { name: string; email: string; password: string; role: UserRole }) => Promise<boolean>;
   appLanguage: AppLanguage;
   onClose: () => void;
   errorMessage: string | null;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage, onClose }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage, onClose, errorMessage }) => {
   const t = translations[appLanguage];
   const [activeTab, setActiveTab] = useState<UserRole>(UserRole.STUDENT);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [formValues, setFormValues] = useState({
     name: '',
     email: '',
@@ -29,22 +30,22 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    setLocalError(null);
     setFormValues(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    if (isSignUp) {
-      onRegister({ ...formValues, role: UserRole.STUDENT });
+  const handleSubmit = async () => {
+    if (!formValues.email || !formValues.password || (isSignUp && !formValues.name)) {
+      setLocalError('Please fill in all required fields.');
       return;
     }
-    const fallbackEmail = activeTab === UserRole.STUDENT
-      ? 'student@edustream.com'
-      : activeTab === UserRole.TEACHER
-        ? 'teacher@edustream.com'
-        : 'admin@edustream.com';
-    onLogin({
-      email: formValues.email || fallbackEmail,
-      password: formValues.password || 'password123',
+    if (isSignUp) {
+      await onRegister({ ...formValues, role: UserRole.STUDENT });
+      return;
+    }
+    await onLogin({
+      email: formValues.email.trim().toLowerCase(),
+      password: formValues.password,
       role: activeTab
     });
   };
@@ -68,6 +69,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
           <p className="text-slate-500 font-medium mb-8">
             {isSignUp ? 'Student registration only. Teachers are added by admins.' : 'Login to your EduStream account'}
           </p>
+          {activeTab === UserRole.ADMIN && !isSignUp && (
+            <p className="text-xs text-slate-400 font-semibold mb-4">
+              Default admin: admin@edustream.com / password123
+            </p>
+          )}
           
           <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
             <button
@@ -140,7 +146,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
           >
             {isSignUp ? 'Create Account' : `Login as ${activeTab === UserRole.STUDENT ? 'Student' : activeTab === UserRole.TEACHER ? 'Teacher' : 'Admin'}`}
           </button>
-
+          {(localError || errorMessage) && (
+            <p className="mt-4 text-sm font-semibold text-rose-500">
+              {localError || errorMessage}
+            </p>
+          )}
+          
           <p className="mt-8 text-sm text-slate-500">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <span

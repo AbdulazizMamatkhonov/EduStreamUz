@@ -70,8 +70,9 @@ app.post('/api/auth/login', async (req: any, res: any) => {
     if (!email || !password || !role) {
       return res.status(400).json({ error: 'Missing credentials' });
     }
-    const user = await User.findOne({ email });
-    if (!user || user.role !== role || !(await bcrypt.compare(password, user.password))) {
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail, role });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
@@ -87,14 +88,15 @@ app.post('/api/auth/register', async (req: any, res: any) => {
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    const existing = await User.findOne({ email });
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res.status(409).json({ error: 'Email already in use' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       role: 'student',
       avatar: `https://i.pravatar.cc/150?u=${email}`
@@ -129,14 +131,15 @@ app.post('/api/admin/teachers', async (req: any, res: any) => {
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    const existing = await User.findOne({ email });
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res.status(409).json({ error: 'Email already in use' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       role: 'teacher',
       avatar: `https://i.pravatar.cc/150?u=${email}`
@@ -179,6 +182,44 @@ app.post('/api/courses/:id/enroll', async (req: any, res: any) => {
     res.json(course);
   } catch (err) {
     res.status(500).json({ error: 'Enrollment error' });
+  }
+});
+
+app.get('/api/quizzes/:courseId', async (req: any, res: any) => {
+  try {
+    const quizzes = await Quiz.find({ courseId: req.params.courseId });
+    res.json(quizzes);
+  } catch (err) {
+    res.status(500).json({ error: 'Fetch error' });
+  }
+});
+
+app.post('/api/quizzes', async (req: any, res: any) => {
+  try {
+    const quiz = new Quiz(req.body);
+    await quiz.save();
+    res.status(201).json(quiz);
+  } catch (err) {
+    res.status(500).json({ error: 'Save error' });
+  }
+});
+
+app.get('/api/homework/:courseId', async (req: any, res: any) => {
+  try {
+    const homework = await Homework.find({ courseId: req.params.courseId });
+    res.json(homework);
+  } catch (err) {
+    res.status(500).json({ error: 'Fetch error' });
+  }
+});
+
+app.post('/api/homework', async (req: any, res: any) => {
+  try {
+    const homework = new Homework(req.body);
+    await homework.save();
+    res.status(201).json(homework);
+  } catch (err) {
+    res.status(500).json({ error: 'Save error' });
   }
 });
 
