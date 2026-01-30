@@ -51,7 +51,7 @@ const App: React.FC = () => {
     try {
       const data = await api.login({ email: payload.email, password: payload.password, role: payload.role });
       setUser(data.user);
-      localStorage.setItem('token', data.token);
+      localStorage.setItem("token", data.token);
     } catch (err) {
       const isTeacher = payload.role === UserRole.TEACHER;
       const isAdmin = payload.role === UserRole.ADMIN;
