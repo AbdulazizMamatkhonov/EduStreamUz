@@ -10,7 +10,7 @@ import LoginPage from "./components/LoginPage";
 import CourseDetails from "./components/CourseDetails";
 import AdminDashboard from "./components/AdminDashboard";
 import { api } from "./apiService";
-
+const APP_VERSION = 1.5;
 type ViewType =
   | "landing"
   | "courses"
@@ -422,7 +422,9 @@ const App: React.FC = () => {
                     <span className="w-2 h-2 bg-indigo-600 rounded-full mr-2 animate-ping"></span>
                     {t.hero_badge}
                   </span>
-                  <p className="text-xs font-semibold text-slate-400 mb-6">Version {APP_VERSION}</p>
+                  <p className="text-xs font-semibold text-slate-400 mb-6">
+                    Version {APP_VERSION}
+                  </p>
                   <h1 className="text-4xl tracking-tight font-extrabold text-slate-900 sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl leading-tight">
                     {t.hero_title.split("Live")[0]}
                     <span className="text-indigo-600 italic">Live</span>
@@ -532,7 +534,10 @@ const App: React.FC = () => {
 
       <footer className="bg-slate-50 border-t border-slate-200 py-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-[10px] font-black tracking-[0.2em] uppercase">
-          <span>© 2023 EDUSTREAM ACADEMY. BUILT FOR GLOBAL LEARNERS. Version {APP_VERSION}</span>
+          <span>
+            © 2023 EDUSTREAM ACADEMY. BUILT FOR GLOBAL LEARNERS. Version{" "}
+            {APP_VERSION}
+          </span>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span
