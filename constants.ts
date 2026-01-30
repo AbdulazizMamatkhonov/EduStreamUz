@@ -89,3 +89,5 @@ export const PLANS = [
     color: 'bg-slate-800'
   }
 ];
+
+export const APP_VERSION = '1.8';
