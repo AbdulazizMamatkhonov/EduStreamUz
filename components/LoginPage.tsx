@@ -52,13 +52,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
       <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
         <div className="p-8 text-center relative">
-          <button 
+          <button
             onClick={onClose}
             className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
           >
             <i className="fas fa-times text-xl"></i>
           </button>
-          
+
           <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-3xl mx-auto mb-6 shadow-xl shadow-indigo-100">
             <i className="fas fa-graduation-cap"></i>
           </div>
@@ -69,13 +69,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
           </p>
           
           <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
-            <button 
+            <button
               onClick={() => setActiveTab(UserRole.STUDENT)}
-              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === UserRole.STUDENT ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                activeTab === UserRole.STUDENT ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
             >
               {t.btn_student_login}
             </button>
-            <button 
+
+            <button
               onClick={() => setActiveTab(UserRole.TEACHER)}
               disabled={isSignUp}
               className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === UserRole.TEACHER ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'} ${isSignUp ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -90,7 +93,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
               Admin
             </button>
           </div>
-          
+
           <div className="space-y-4 text-left">
             {isSignUp && (
               <div>
@@ -116,6 +119,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
                 placeholder="name@example.com"
               />
             </div>
+
             <div>
               <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2 px-1">Password</label>
               <input 
@@ -135,7 +139,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage,
           >
             {isSignUp ? 'Create Account' : `Login as ${activeTab === UserRole.STUDENT ? 'Student' : activeTab === UserRole.TEACHER ? 'Teacher' : 'Admin'}`}
           </button>
-          
+
           <p className="mt-8 text-sm text-slate-500">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <span
