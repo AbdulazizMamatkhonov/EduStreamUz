@@ -167,6 +167,40 @@ const App: React.FC = () => {
     );
   }
 
+  const renderCoursesGrid = () => (
+    courses.length === 0 ? (
+      <div className="bg-white rounded-[2.5rem] p-12 text-center border border-dashed border-slate-200 text-slate-500">
+        <p className="font-bold">No courses available.</p>
+        <p className="text-sm mt-2">Start the backend server to load live courses.</p>
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        {courses.map((course: Course) => (
+          <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
+            <CourseCard
+              course={course}
+              onEnroll={(id: string) => enrollInCourse({ stopPropagation: () => {} } as React.MouseEvent, id)}
+              isEnrolled={enrolledCourses.includes(course.id)}
+              appLanguage={language}
+            />
+          </div>
+        ))}
+      </div>
+    )
+  );
+
+  const renderCoursesSection = () => (
+    <section id="courses" className="py-24 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">{t.featured_courses}</h2>
+          <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
+        </div>
+        {renderCoursesGrid()}
+      </div>
+    </section>
+  );
+
   const mainView = () => {
     // Classroom
     if (view === "classroom" && activeClassroom) {
@@ -323,33 +357,7 @@ const App: React.FC = () => {
       );
     }
     if (view === 'courses') {
-        return (
-            <section id="courses" className="py-24 bg-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">{t.featured_courses}</h2>
-                        <p className="mt-4 text-xl text-slate-500 font-medium">{t.courses_subtitle}</p>
-                    </div>
-                    {courses.length === 0 ? (
-                      <div className="bg-white rounded-[2.5rem] p-12 text-center border border-dashed border-slate-200 text-slate-500">
-                        <p className="font-bold">No courses available.</p>
-                        <p className="text-sm mt-2">Start the backend server to load live courses.</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                          {courses.map((course: Course) => (
-                              <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
-                                  <CourseCard course={course} onEnroll={(id: string) => enrollInCourse({ stopPropagation: () => {} } as React.MouseEvent, id)} isEnrolled={enrolledCourses.includes(course.id)} appLanguage={language} />
-                              </div>
-                          ))}
-                      </div>
-                    )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      );
+        return renderCoursesSection();
     }
 
     // Pricing page
@@ -437,33 +445,7 @@ const App: React.FC = () => {
             </div>
           </section>
         )}
-
-        <section id="courses" className="py-24 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">
-                {t.featured_courses}
-              </h2>
-              <p className="mt-4 text-xl text-slate-500 font-medium">
-                {t.courses_subtitle}
-              </p>
-            </div>
-            {courses.length === 0 ? (
-              <div className="bg-white rounded-[2.5rem] p-12 text-center border border-dashed border-slate-200 text-slate-500">
-                <p className="font-bold">No courses available.</p>
-                <p className="text-sm mt-2">Start the backend server to load live courses.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {courses.map((course: Course) => (
-                      <div key={course.id} onClick={() => viewCourse(course)} className="cursor-pointer">
-                          <CourseCard course={course} onEnroll={(id: string) => enrollInCourse({ stopPropagation: () => {} } as React.MouseEvent, id)} isEnrolled={enrolledCourses.includes(course.id)} appLanguage={language} />
-                      </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        </section>
+        {renderCoursesSection()}
       </>
     );
   };
