@@ -8,6 +8,7 @@ interface LoginPageProps {
   onRegister: (payload: { name: string; email: string; password: string; role: UserRole }) => void;
   appLanguage: AppLanguage;
   onClose: () => void;
+  errorMessage: string | null;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, appLanguage, onClose }) => {
